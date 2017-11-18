@@ -37,15 +37,23 @@ class WaypointUpdater(object):
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
         # TODO: Add other member variables you need below
+        self.waypoints = None
+        self.current_pose = None
+        self.idx_of_nearest  = None
+
 
         rospy.spin()
 
     def pose_cb(self, msg):
         # TODO: Implement
+        self.current_pose = msg.pose
+        self.create_final_waypoints()
         pass
 
     def waypoints_cb(self, waypoints):
         # TODO: Implement
+        if self.waypoints is None:
+            self.waypoints = waypoints
         pass
 
     def traffic_cb(self, msg):
@@ -69,6 +77,30 @@ class WaypointUpdater(object):
             dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
             wp1 = i
         return dist
+
+    def create_final_waypoints():
+         dist = lambda a,b : math.sqrt((a.x - b.x)**2 +(a.y -b.y)**2 +(a.z - b.z)**2)
+
+         if self.waypoints is not None or self.current_pose is not None:
+             #initial waypoint search
+             idx = 0
+             self.idx_of_nearest = None
+             min_dist = float("inf")
+             for waypoint in self.waypoints:
+                 d = dist(waypoint.pose.pose.position, self.current_pose.pose.position)
+                 if d < min_dist:
+                     min_dist = d
+                     self.idx_of_nearest = idx_of_nearest
+                 idx += 1
+
+             if self.idx_of_nearest is not None:
+                 next_waypoints = [ waypoints[i] for i in range(len(waypoints)) if i >= self.idx_of_nearest and i < self.idx_of_nearest + LOOKAHEAD_WPS]
+                 lane = Lane()
+                 lane.waypoints = next_waypoints
+                 lane.header.frame_id = '/world'
+                 self.final_waypoints_pub.publish(lane)
+
+
 
 
 if __name__ == '__main__':

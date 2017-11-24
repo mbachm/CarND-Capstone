@@ -40,7 +40,7 @@ class WaypointUpdater(object):
         self.waypoints = None
         self.current_pose = None
         self.idx_of_nearest  = None
-        
+
         rospy.loginfo("Init")
         rospy.spin()
 
@@ -85,9 +85,8 @@ class WaypointUpdater(object):
     def create_final_waypoints(self):
          dist = lambda a,b : math.sqrt((a.x - b.x)**2 +(a.y -b.y)**2 +(a.z - b.z)**2)
          rospy.loginfo("create final cb")
-         if self.waypoints is not None or self.current_pose is not None:
+         if self.waypoints is not None and self.current_pose is not None:
              #initial waypoint search
-             idx = 0
              self.idx_of_nearest = None
              min_dist = float("inf")
              for idx in range(len(self.waypoints)):

@@ -40,18 +40,21 @@ class WaypointUpdater(object):
         self.waypoints = None
         self.current_pose = None
         self.idx_of_nearest  = None
-
-
+        
+        rospy.loginfo("Init")
         rospy.spin()
 
     def pose_cb(self, msg):
         # TODO: Implement
+        rospy.loginfo("Pose cb")
         self.current_pose = msg.pose
-        self.create_final_waypoints()
+        if self.waypoints is not None:
+            self.create_final_waypoints()
         pass
 
     def waypoints_cb(self, msg):
         # TODO: Implement
+        rospy.loginfo("Waypoints cb")
         if self.waypoints is None:
             self.waypoints = msg.waypoints
             self.create_final_waypoints()
@@ -81,7 +84,7 @@ class WaypointUpdater(object):
 
     def create_final_waypoints(self):
          dist = lambda a,b : math.sqrt((a.x - b.x)**2 +(a.y -b.y)**2 +(a.z - b.z)**2)
-         rospy.loginfo(self.waypoints)
+         rospy.loginfo("create final cb")
          if self.waypoints is not None or self.current_pose is not None:
              #initial waypoint search
              idx = 0
@@ -99,7 +102,10 @@ class WaypointUpdater(object):
                  lane = Lane()
                  lane.waypoints = next_waypoints
                  lane.header.frame_id = '/world'
+                 rospy.loginfo("Size of waypoints %i\n", len(next_waypoints))
+
                  self.final_waypoints_pub.publish(lane)
+
 
 
 

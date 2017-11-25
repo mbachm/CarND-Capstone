@@ -11,10 +11,11 @@ import tf
 import cv2
 import yaml
 
-# latest updates by Nalini 11/24/2017
+# latest updates by Nalini 11/25/2017
+# not completed 
 
 
-# added by Nalini 11/22/2017
+
 import numpy as np
 import math
 
@@ -146,8 +147,7 @@ class TLDetector(object):
 
 	for wp in self.waypoints:
 	    x1, y1, z1 = self.get_waypoint_coordinates(wp)
-	    dx, dy, dz = x1-x2, y1-y2, z1-z2
-	    dist = math.sqrt(dx*dx + dy*dy + dz*dz)
+	    dist = distance(self,x1, y1, z1,x2, y2, z2 )
 	    distances.append(dist)
 
 	closest_wp = np.argmin(distances)
@@ -195,14 +195,18 @@ class TLDetector(object):
 
         if(self.car_pose):
 
+	
+            # Get the car coordinates
 	    xc, yc, zc = self.get_car_coordinates(self.car_pose)
 
+	    # check all the lights
             for i, light in enumerate (self.lights):
-		xl, yl, zl = self.get_light_coordinates(light)
-		dx, dy, dz = xc-xl, yc-yl, zc-zl
-		dist = math.sqrt(dx*dx + dy*dy + dz*dz)
 
-		# if traffic light is too far, move on to the next one
+	        # find the distance between the light and car
+		xl, yl, zl = self.get_light_coordinates(light)
+		dist = distance(self,xc, yc, zc,xl, yl, zl )
+
+		# if traffic light is too far from the car, move on to the next one
 		if dist >= 100:
 		   continue
 		
@@ -212,18 +216,17 @@ class TLDetector(object):
 		if light_state != TrafficLight.RED:
 		   continue
 
-		# if light is red get the closest waypoint
-
+		# if light is red get the closest waypoint to the light
 		closest_wp_index = self.get_closest_waypoint(light)
 		closest_waypoint = self.waypoints[closest_wp_index]
 
-		# get the coordinates of that waypoint, find the minimum distance
-		xw, yw, zw = get_waypoint_coordinates(closest_waypoint)
-		xl, yl, zl = get_car_coordinates(self.car_pose)
-		d = self.distance(xw, yw, zw, xl, yl, zl )
-		
-		# closest_wp_final
+		# todo - add "Ahead of " logic
 
+		# get the coordinates of that waypoint, find the distance between the waypoint and car
+		xw, yw, zw = get_waypoint_coordinates(closest_waypoint)
+		d = self.distance(xw, yw, zw, xc, yc, zc )
+		
+		# find the waypoint closest to the car
 		if d < closest_wp_dist:
 		   closest_wp_final = closest_wp_index
 		   closest_wp_dist = d
@@ -233,7 +236,7 @@ class TLDetector(object):
 	# end checking car_pose
 
 	
-        #TODO find the closest visible traffic light (if one exists)
+        #send back the index of the waypoint closest to the car and light
 
 	if closest_wp_final is not none:
 	   return closest_wp_final, TrafficLight.RED

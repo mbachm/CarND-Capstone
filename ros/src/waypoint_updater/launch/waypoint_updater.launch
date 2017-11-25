@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
 <launch>
     <node pkg="waypoint_updater" type="waypoint_updater.py" name="waypoint_updater" />
+    <test pkg="waypoint_updater" type="test_waypoint_updater.py" test-name="test_correct_publishing_of_waypoints" />
 </launch>

@@ -8,6 +8,7 @@ import math
 
 from twist_controller import Controller
 
+
 '''
 You can build this node only after you have built (or partially built) the `waypoint_updater` node.
 
@@ -46,6 +47,12 @@ class DBWNode(object):
         max_lat_accel = rospy.get_param('~max_lat_accel', 3.)
         max_steer_angle = rospy.get_param('~max_steer_angle', 8.)
 
+
+        config = { 'wheel_base': wheel_base,
+                   'steer_ratio': steer_ratio,
+                   'max_lat_accel': max_lat_accel,
+                   'max_steer_angle': max_steer_angle }
+
         self.steer_pub = rospy.Publisher('/vehicle/steering_cmd',
                                          SteeringCmd, queue_size=1)
         self.throttle_pub = rospy.Publisher('/vehicle/throttle_cmd',
@@ -56,7 +63,17 @@ class DBWNode(object):
         # TODO: Create `TwistController` object
         # self.controller = TwistController(<Arguments you wish to provide>)
 
+        self.controller = Controller(**config)
+        self.current_velocity = None
+        self.twist_cmd = None
+        self.dbw_enabled = False
+        self.previous_time = rospy.get_time()
         # TODO: Subscribe to all the topics you need to
+
+        rospy.Subscriber('/current_velocity', TwistStamped, self.current_velocity_callback)
+        rospy.Subscriber('/twist_cmd', TwistStamped, self.twist_cmd_callback)
+        rospy.Subscriber('/vehicle/dbw_enabled', Bool, self.dbw_enabled_callback)
+
 
         self.loop()
 
@@ -72,6 +89,17 @@ class DBWNode(object):
             #                                                     <any other argument you need>)
             # if <dbw is enabled>:
             #   self.publish(throttle, brake, steer)
+
+            current_time = rospy.get_time()
+            sample_time = current_time - self.previous_time
+            self.previous_time = current_time
+
+            throttle, brake, steering = self.controller.control(self.current_velocity, 
+                                                                self.twist_cmd, 
+                                                                self.dbw_enabled,
+                                                                sample_time)
+            if self.dbw_enabled:
+                self.publish(throttle, brake, steering)
             rate.sleep()
 
     def publish(self, throttle, brake, steer):
@@ -91,6 +119,15 @@ class DBWNode(object):
         bcmd.pedal_cmd_type = BrakeCmd.CMD_TORQUE
         bcmd.pedal_cmd = brake
         self.brake_pub.publish(bcmd)
+
+    def current_velocity_callback(self, msg):
+        self.current_velocity = msg
+
+    def twist_cmd_callback(self, msg):
+        self.twist_cmd = msg
+
+    def dbw_enabled_callback(self, msg):
+        self.dbw_enabled = msg.data
 
 
 if __name__ == '__main__':

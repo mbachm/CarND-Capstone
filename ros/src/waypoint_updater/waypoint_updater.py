@@ -39,7 +39,7 @@ class WaypointUpdater(object):
         # TODO: Add other member variables you need below
         self.waypoints = None
         self.current_pose = None
-        self.idx_of_nearest  = None
+        self.idx_of_nearest = None
 
         rospy.loginfo("Init")
         rospy.spin()

@@ -73,27 +73,27 @@ class TLDetector(object):
     # Some utility functions:
    
     def get_car_coordinates (self, car_pose):
- 	car_x = car_pose.position.x
- 	car_y = car_pose.position.y
-	car_z = car_pose.position.z
-	return (car_x, car_y, car_z)
+        car_x = car_pose.position.x
+        car_y = car_pose.position.y
+        car_z = car_pose.position.z
+        return (car_x, car_y, car_z)
 
     def get_waypoint_coordinates(self, waypoint):
-       	w_x = waypoint.pose.pose.position.x
-	w_y = waypoint.pose.pose.position.y
-	w_z = waypoint.pose.pose.position.z
-	return(w_x, w_y, w_z)
+        w_x = waypoint.pose.pose.position.x
+        w_y = waypoint.pose.pose.position.y
+        w_z = waypoint.pose.pose.position.z
+        return(w_x, w_y, w_z)
 
     def get_light_coordinates(self, light):
-	l_x = light.pose.pose.position.x
-	l_y = light.pose.pose.position.y
-	l_z = light.pose.pose.position.z
-	return(l_x, l_y, l_z)
+        l_x = light.pose.pose.position.x
+        l_y = light.pose.pose.position.y
+        l_z = light.pose.pose.position.z
+        return(l_x, l_y, l_z)
 
     def distance(self, x1, y1, z1, x2, y2, z2):
-	dx, dy, dz = x1-x2, y1-y2, z1-z2
-	dist = math.sqrt(dx*dx + dy*dy + dz*dz)
-	return dist
+        dx, dy, dz = x1-x2, y1-y2, z1-z2
+        dist = math.sqrt(dx*dx + dy*dy + dz*dz)
+        return dist
 
 
     def image_cb(self, msg):
@@ -135,22 +135,21 @@ class TLDetector(object):
         Returns:
             int: index of the closest waypoint in self.waypoints
 
-	Modified by Nalini 11/23/2017
+        Modified by Nalini 11/23/2017
 
         """
         #TODO implement
 
-	
-	x2, y2, z2 = self.get_light_coordinates(light)
+        x2, y2, z2 = self.get_light_coordinates(light)
 
-	distances = []
+        distances = []
 
-	for wp in self.waypoints:
-	    x1, y1, z1 = self.get_waypoint_coordinates(wp)
-	    dist = distance(self,x1, y1, z1,x2, y2, z2 )
-	    distances.append(dist)
+        for wp in self.waypoints:
+            x1, y1, z1 = self.get_waypoint_coordinates(wp)
+            dist = distance(self,x1, y1, z1,x2, y2, z2 )
+            distances.append(dist)
 
-	closest_wp = np.argmin(distances)
+        closest_wp = np.argmin(distances)
 
         return closest_wp
 
@@ -181,7 +180,7 @@ class TLDetector(object):
             int: index of waypoint closest to the upcoming stop line for a traffic light (-1 if none exists)
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
-	Modified by Nalini 11/24/2017
+            Modified by Nalini 11/24/2017
 
         """
         
@@ -189,60 +188,60 @@ class TLDetector(object):
         # List of positions that correspond to the line to stop in front of for a given intersection
         # stop_line_positions = self.config['stop_line_positions']
 
-	
-	closest_wp_final = None
-	closest_wp_dist = float('inf')
+
+        closest_wp_final = None
+        closest_wp_dist = float('inf')
 
         if(self.car_pose):
 
-	
+
             # Get the car coordinates
-	    xc, yc, zc = self.get_car_coordinates(self.car_pose)
+            xc, yc, zc = self.get_car_coordinates(self.car_pose)
 
-	    # check all the lights
-            for i, light in enumerate (self.lights):
+            # check all the lights
+                for i, light in enumerate (self.lights):
 
-	        # find the distance between the light and car
-		xl, yl, zl = self.get_light_coordinates(light)
-		dist = distance(self,xc, yc, zc,xl, yl, zl )
+                    # find the distance between the light and car
+                    xl, yl, zl = self.get_light_coordinates(light)
+                    dist = distance(self,xc, yc, zc,xl, yl, zl )
 
-		# if traffic light is too far from the car, move on to the next one
-		if dist >= 100:
-		   continue
-		
+                    # if traffic light is too far from the car, move on to the next one
+                    if dist >= 100:
+                        continue
 
-		# find light color and if not red move on to the next one
-   		light_state = self.get_light_state(light)
-		if light_state != TrafficLight.RED:
-		   continue
 
-		# if light is red get the closest waypoint to the light
-		closest_wp_index = self.get_closest_waypoint(light)
-		closest_waypoint = self.waypoints[closest_wp_index]
+                    # find light color and if not red move on to the next one
+                    light_state = self.get_light_state(light)
+                    if light_state != TrafficLight.RED:
+                        continue
 
-		# todo - add "Ahead of " logic
+                    # if light is red get the closest waypoint to the light
+                    closest_wp_index = self.get_closest_waypoint(light)
+                    closest_waypoint = self.waypoints[closest_wp_index]
 
-		# get the coordinates of that waypoint, find the distance between the waypoint and car
-		xw, yw, zw = get_waypoint_coordinates(closest_waypoint)
-		d = self.distance(xw, yw, zw, xc, yc, zc )
-		
-		# find the waypoint closest to the car
-		if d < closest_wp_dist:
-		   closest_wp_final = closest_wp_index
-		   closest_wp_dist = d
-		
-		# end for loop for checking light
+                    # todo - add "Ahead of " logic
 
-	# end checking car_pose
+                    # get the coordinates of that waypoint, find the distance between the waypoint and car
+                    xw, yw, zw = get_waypoint_coordinates(closest_waypoint)
+                    d = self.distance(xw, yw, zw, xc, yc, zc )
 
-	
+                    # find the waypoint closest to the car
+                    if d < closest_wp_dist:
+                        closest_wp_final = closest_wp_index
+                        closest_wp_dist = d
+
+                # end for loop for checking light
+
+        # end checking car_pose
+
+
         #send back the index of the waypoint closest to the car and light
 
-	if closest_wp_final is not none:
-	   return closest_wp_final, TrafficLight.RED
-	else:
-           return -1, TrafficLight.UNKNOWN
-		
+        if closest_wp_final is not none:
+            return closest_wp_final, TrafficLight.RED   
+        else:
+            return -1, TrafficLight.UNKNOWN
+
 
 
 if __name__ == '__main__':

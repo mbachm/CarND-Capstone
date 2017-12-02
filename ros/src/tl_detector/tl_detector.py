@@ -72,11 +72,11 @@ class TLDetector(object):
         self.lights = msg.lights
 
     # Some utility functions:
-   
+
     def get_car_coordinates (self, car_pose):
-        car_x = car_pose.position.x
-        car_y = car_pose.position.y
-        car_z = car_pose.position.z
+        car_x = car_pose.pose.position.x
+        car_y = car_pose.pose.position.y
+        car_z = car_pose.pose.position.z
         return (car_x, car_y, car_z)
 
     def get_waypoint_coordinates(self, waypoint):
@@ -154,7 +154,7 @@ class TLDetector(object):
 
         for wp in self.waypoints:
             x1, y1, z1 = self.get_waypoint_coordinates(wp)
-            dist = distance(self,x1, y1, z1,x2, y2, z2 )
+            dist = self.distance(x1, y1, z1, x2, y2, z2)
             distances.append(dist)
 
         closest_wp = np.argmin(distances)
@@ -207,36 +207,34 @@ class TLDetector(object):
             xc, yc, zc = self.get_car_coordinates(self.car_pose)
 
             # check all the lights
-                for i, light in enumerate (self.lights):
+            for i, light in enumerate (self.lights):
+                # find the distance between the light and car
+                xl, yl, zl = self.get_light_coordinates(light)
+                dist = self.distance(xc, yc, zc, xl, yl, zl)
 
-                    # find the distance between the light and car
-                    xl, yl, zl = self.get_light_coordinates(light)
-                    dist = distance(self,xc, yc, zc,xl, yl, zl )
+                # if traffic light is too far from the car, move on to the next one
+                if dist >= 100:
+                    continue
 
-                    # if traffic light is too far from the car, move on to the next one
-                    if dist >= 100:
-                        continue
+                # find light color and if not red move on to the next one
+                light_state = self.get_light_state(light)
+                if light_state != TrafficLight.RED:
+                    continue
 
+                # if light is red get the closest waypoint to the light
+                closest_wp_index = self.get_closest_waypoint(light)
+                closest_waypoint = self.waypoints[closest_wp_index]
 
-                    # find light color and if not red move on to the next one
-                    light_state = self.get_light_state(light)
-                    if light_state != TrafficLight.RED:
-                        continue
+                # todo - add "Ahead of " logic
 
-                    # if light is red get the closest waypoint to the light
-                    closest_wp_index = self.get_closest_waypoint(light)
-                    closest_waypoint = self.waypoints[closest_wp_index]
+                # get the coordinates of that waypoint, find the distance between the waypoint and car
+                xw, yw, zw = self.get_waypoint_coordinates(closest_waypoint)
+                d = self.distance(xw, yw, zw, xc, yc, zc)
 
-                    # todo - add "Ahead of " logic
-
-                    # get the coordinates of that waypoint, find the distance between the waypoint and car
-                    xw, yw, zw = get_waypoint_coordinates(closest_waypoint)
-                    d = self.distance(xw, yw, zw, xc, yc, zc )
-
-                    # find the waypoint closest to the car
-                    if d < closest_wp_dist:
-                        closest_wp_final = closest_wp_index
-                        closest_wp_dist = d
+                # find the waypoint closest to the car
+                if d < closest_wp_dist:
+                    closest_wp_final = closest_wp_index
+                    closest_wp_dist = d
 
                 # end for loop for checking light
 
@@ -244,8 +242,7 @@ class TLDetector(object):
 
 
         #send back the index of the waypoint closest to the car and light
-
-        if closest_wp_final is not none:
+        if closest_wp_final is not None:
             return closest_wp_final, TrafficLight.RED   
         else:
             return -1, TrafficLight.UNKNOWN

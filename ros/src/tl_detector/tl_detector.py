@@ -11,8 +11,9 @@ import tf
 import cv2
 import yaml
 
-# latest updates by Nalini 11/25/2017
+# latest updates by Nalini 12/2/2017
 # not completed 
+
 
 
 
@@ -95,13 +96,13 @@ class TLDetector(object):
         dist = math.sqrt(dx*dx + dy*dy + dz*dz)
         return dist
 
-	def waypoint_ahead(self, waypoint, pose):
-		# check if waypoint is ahead of car
-		xw, yw, zw = self.get_waypoint_coordinates(waypoint)
-		xc, yc, zc = self.get_car_coordinates(self.car_pose)
-		direction = atan2((yc -yw), (xc - xw))
-		return abs (direction) < math.pi*0.5
-		
+    def waypoint_ahead(self, waypoint, pose):
+        # check if waypoint is ahead of car
+        xw, yw, zw = self.get_waypoint_coordinates(waypoint)
+        xc, yc, zc = self.get_car_coordinates(self.car_pose)
+        direction = atan2((yc -yw), (xc - xw))
+        return abs (direction) < math.pi*0.5
+
 
     def image_cb(self, msg):
         """Identifies red lights in the incoming camera image and publishes the index

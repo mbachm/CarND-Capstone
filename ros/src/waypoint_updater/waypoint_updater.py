@@ -38,6 +38,7 @@ class WaypointUpdater(object):
 
         # TODO: Add other member variables you need below
         self.waypoints = None
+        self.waypoints_lenght = None
         self.current_pose = None
         self.idx_of_nearest = None
 
@@ -57,6 +58,7 @@ class WaypointUpdater(object):
         rospy.loginfo("Waypoints cb")
         if self.waypoints is None:
             self.waypoints = msg.waypoints
+            self.waypoints_lenght = len(msg.waypoints)
             self.create_final_waypoints()
         pass
 
@@ -74,36 +76,43 @@ class WaypointUpdater(object):
     def set_waypoint_velocity(self, waypoints, waypoint, velocity):
         waypoints[waypoint].twist.twist.linear.x = velocity
 
+    def euclidean_distance(self, a, b):
+        return math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2 + (a.z-b.z)**2)
+
     def distance(self, waypoints, wp1, wp2):
         dist = 0
-        dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
         for i in range(wp1, wp2+1):
-            dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
+            dist += self.euclidean_distance(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
             wp1 = i
         return dist
 
+    def get_initial_nearest_waypoint(self):
+        min_dist = float("inf")
+        for idx in range(self.waypoints_lenght):
+            d = self.euclidean_distance(self.waypoints[idx].pose.pose.position, self.current_pose.position)
+            if d < min_dist:
+                min_dist = d
+                self.idx_of_nearest = idx
+
     def create_final_waypoints(self):
-         dist = lambda a,b : math.sqrt((a.x - b.x)**2 +(a.y -b.y)**2 +(a.z - b.z)**2)
-         rospy.loginfo("create final cb")
-         if self.waypoints is not None and self.current_pose is not None:
-             #initial waypoint search
-             self.idx_of_nearest = None
-             min_dist = float("inf")
-             for idx in range(len(self.waypoints)):
-                 d = dist(self.waypoints[idx].pose.pose.position, self.current_pose.position)
-                 if d < min_dist:
-                     min_dist = d
-                     self.idx_of_nearest = idx
+        if self.waypoints is not None and self.current_pose is not None:
+            if self.idx_of_nearest is None:
+                #initial waypoint search
+                self.get_initial_nearest_waypoint()
 
+            if self.idx_of_nearest is not None:
+                d1 = self.euclidean_distance(self.waypoints[self.idx_of_nearest].pose.pose.position, self.current_pose.position)
+                d2 = self.euclidean_distance(self.waypoints[(self.idx_of_nearest+1) % self.waypoints_lenght].pose.pose.position, self.current_pose.position)
+                if d2 < d1:
+                    self.idx_of_nearest += 1
+                    self.idx_of_nearest %= self.waypoints_lenght
 
-             if self.idx_of_nearest is not None:
-                 next_waypoints = [ self.waypoints[i] for i in range(len(self.waypoints)) if i >= self.idx_of_nearest and i < self.idx_of_nearest + LOOKAHEAD_WPS]
-                 lane = Lane()
-                 lane.waypoints = next_waypoints
-                 lane.header.frame_id = '/world'
-                 rospy.loginfo("Size of waypoints %i\n", len(next_waypoints))
+                next_waypoints = [self.waypoints[i] for i in range(len(self.waypoints)) if self.idx_of_nearest <= i < self.idx_of_nearest + LOOKAHEAD_WPS]
+                lane = Lane()
+                lane.waypoints = next_waypoints
+                lane.header.frame_id = '/world'
 
-                 self.final_waypoints_pub.publish(lane)
+                self.final_waypoints_pub.publish(lane)
 
 
 

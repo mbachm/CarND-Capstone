@@ -101,7 +101,7 @@ class TLDetector(object):
         xw, yw, zw = self.get_waypoint_coordinates(waypoint)
         xc, yc, zc = self.get_car_coordinates(self.car_pose)
         direction = atan2((yc -yw), (xc - xw))
-        return abs (direction) < math.pi*0.5
+        return abs(direction) < math.pi*0.5
 
 
     def image_cb(self, msg):

@@ -134,11 +134,11 @@ class TLDetector(object):
             self.upcoming_red_light_pub.publish(Int32(self.last_wp))
             self.state_count += 1
 
-    def get_closest_waypoint(self, light):
+    def get_closest_waypoint(self, pose):
         """Identifies the closest path waypoint to the given position
             https://en.wikipedia.org/wiki/Closest_pair_of_points_problem
         Args:
-            light: light position to match a waypoint to 
+            pose (Pose): position to match a waypoint to 
 
         Returns:
             int: index of the closest waypoint in self.waypoints
@@ -148,13 +148,13 @@ class TLDetector(object):
         """
         #TODO implement
 
-        x2, y2, z2 = self.get_light_coordinates(light)
+        # x2, y2, z2 = self.get_light_coordinates(light)
 
         distances = []
 
         for wp in self.waypoints:
             x1, y1, z1 = self.get_waypoint_coordinates(wp)
-            dist = self.distance(x1, y1, z1, x2, y2, z2)
+            dist = self.distance(x1, y1, z1, pose.position.x, pose.position.y, pose.position.z)
             distances.append(dist)
 
         closest_wp = np.argmin(distances)

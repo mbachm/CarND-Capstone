@@ -11,7 +11,7 @@ import tf
 import cv2
 import yaml
 
-# latest updates by Nalini 12/2/2017
+# latest updates by Nalini 12/5/2017
 # not completed 
 
 
@@ -199,12 +199,17 @@ class TLDetector(object):
 
         closest_wp_final = None
         closest_wp_dist = float('inf')
+        tl_waypoints = []
+        closest_tl_wpt = -1
 
         if(self.car_pose):
 
 
             # Get the car coordinates
             xc, yc, zc = self.get_car_coordinates(self.car_pose)
+
+            # get closest waypoint to the car
+            waypoint_car_idx = self.get_closest_waypoint(self.car_pose)
 
             # check all the lights
             for i, light in enumerate (self.lights):
@@ -225,18 +230,19 @@ class TLDetector(object):
                 closest_wp_index = self.get_closest_waypoint(light)
                 closest_waypoint = self.waypoints[closest_wp_index]
 
-                # todo - add "Ahead of " logic
+                # Create a list of waypoints close to the lights
 
-                # get the coordinates of that waypoint, find the distance between the waypoint and car
-                xw, yw, zw = self.get_waypoint_coordinates(closest_waypoint)
-                d = self.distance(xw, yw, zw, xc, yc, zc)
+                tl_waypoints.append(closest_wp_index)
 
-                # find the waypoint closest to the car
-                if d < closest_wp_dist:
-                    closest_wp_final = closest_wp_index
-                    closest_wp_dist = d
+            # end for loop for checking light
 
-                # end for loop for checking light
+            # loop through waypoints and get the closest waypoint to the closest red light which is ahead of the car
+            for i in range(len(tl_waypoints)):
+                if tl_waypoints[i] > waypoint_car_idx:
+                        closest_wp_final = tl_waypoints[i]
+                        break
+
+            # end for loop for checking waypoints
 
         # end checking car_pose
 

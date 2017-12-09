@@ -11,7 +11,7 @@ import tf
 import cv2
 import yaml
 
-# latest updates by Nalini 12/5/2017
+# latest updates by Nalini 12/9/2017
 # not completed 
 
 
@@ -218,38 +218,45 @@ class TLDetector(object):
                 dist = self.distance(xc, yc, zc, xl, yl, zl)
 
                 # if traffic light is too far from the car, move on to the next one
-                if dist >= 100:
-                    continue
+                # removing as suggested by Jingjing
+                # if dist >= 100:
+                    # continue
 
                 # find light color and if not red move on to the next one
-                light_state = self.get_light_state(light)
-                if light_state != TrafficLight.RED:
-                    continue
+                # removing red light check for now - Nalini 12/9/2017
+                # light_state = self.get_light_state(light)
+                # if light_state != TrafficLight.RED:
+                    # continue
 
                 # if light is red get the closest waypoint to the light
-                closest_wp_index = self.get_closest_waypoint(light)
-                closest_waypoint = self.waypoints[closest_wp_index]
+                closest__light_wp_index = self.get_closest_waypoint(light)
+
+                # if the light waypooint is behind the car waypoint, move on to the next one
+                if closest__light_wp_index < waypoint_car_idx:
+                    continue
+
+                closest_waypoint = self.waypoints[closest__light_wp_index]
+
+                # find the light that is closest to the car and return the color of that light
+                if closest_tl_wpt < 0 or closest__light_wp_index  < closest_tl_wpt:
+                    closest_tl_wpt = closest__light_wp_index
+                    light_state = self.get_light_state(light)
 
                 # Create a list of waypoints close to the lights
-
-                tl_waypoints.append(closest_wp_index)
+                # Removing for now 12/9/2017
+                # tl_waypoints.append(closest_wp_index)
 
             # end for loop for checking light
 
-            # loop through waypoints and get the closest waypoint to the closest red light which is ahead of the car
-            for i in range(len(tl_waypoints)):
-                if tl_waypoints[i] > waypoint_car_idx:
-                        closest_wp_final = tl_waypoints[i]
-                        break
-
-            # end for loop for checking waypoints
+            
 
         # end checking car_pose
 
 
         #send back the index of the waypoint closest to the car and light
-        if closest_wp_final is not None:
-            return closest_wp_final, TrafficLight.RED   
+        # changing as suggested by Jingjing - nalini 12/9/2017
+        if closest_tl_wpt is not None:
+            return closest_tl_wpt, light_state   
         else:
             return -1, TrafficLight.UNKNOWN
 

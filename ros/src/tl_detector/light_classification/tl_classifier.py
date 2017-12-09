@@ -51,5 +51,6 @@ class TLClassifier(object):
         pred = np.argmax(pred)
 
         # determine light color based on what is returned by model
+        # assuming model returns a number  0 == green, 1 == unknown, 2 == red, 3 == yellow
 
         return TrafficLight.UNKNOWN

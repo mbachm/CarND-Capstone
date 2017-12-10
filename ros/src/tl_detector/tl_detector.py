@@ -224,9 +224,9 @@ class TLDetector(object):
 
                 # find light color and if not red move on to the next one
                 # removing red light check for now - Nalini 12/9/2017
-                # light_state = self.get_light_state(light)
-                # if light_state != TrafficLight.RED:
-                    # continue
+                light_state = self.get_light_state(light)
+                if light_state != TrafficLight.RED:
+                    continue
 
                 # if light is red get the closest waypoint to the light
                 closest__light_wp_index = self.get_closest_waypoint(light.pose.pose)
@@ -255,7 +255,7 @@ class TLDetector(object):
 
         #send back the index of the waypoint closest to the car and light
         # changing as suggested by Jingjing - nalini 12/9/2017
-        if closest_tl_wpt is not None:
+        if closest_tl_wpt != -1:
             #TODO: Change back to 'return closest_tl_wpt, light_state' when we detect traffic light
             return closest_tl_wpt, TrafficLight.RED
         else:

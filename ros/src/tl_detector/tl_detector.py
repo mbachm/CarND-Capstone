@@ -66,7 +66,7 @@ class TLDetector(object):
         self.car_pose = msg
 
     def waypoints_cb(self, waypoints):
-        self.waypoints = waypoints
+        self.waypoints = waypoints.waypoints
 
     def traffic_cb(self, msg):
         self.lights = msg.lights
@@ -202,17 +202,17 @@ class TLDetector(object):
         tl_waypoints = []
         closest_tl_wpt = -1
 
-        if(self.car_pose):
+        if(self.car_pose and self.waypoints):
 
 
             # Get the car coordinates
             xc, yc, zc = self.get_car_coordinates(self.car_pose)
 
             # get closest waypoint to the car
-            waypoint_car_idx = self.get_closest_waypoint(self.car_pose)
+            waypoint_car_idx = self.get_closest_waypoint(self.car_pose.pose)
 
             # check all the lights
-            for i, light in enumerate (self.lights):
+            for i, light in enumerate(self.lights):
                 # find the distance between the light and car
                 xl, yl, zl = self.get_light_coordinates(light)
                 dist = self.distance(xc, yc, zc, xl, yl, zl)
@@ -229,7 +229,7 @@ class TLDetector(object):
                     # continue
 
                 # if light is red get the closest waypoint to the light
-                closest__light_wp_index = self.get_closest_waypoint(light)
+                closest__light_wp_index = self.get_closest_waypoint(light.pose.pose)
 
                 # if the light waypooint is behind the car waypoint, move on to the next one
                 if closest__light_wp_index < waypoint_car_idx:
@@ -256,7 +256,8 @@ class TLDetector(object):
         #send back the index of the waypoint closest to the car and light
         # changing as suggested by Jingjing - nalini 12/9/2017
         if closest_tl_wpt is not None:
-            return closest_tl_wpt, light_state   
+            #TODO: Change back to 'return closest_tl_wpt, light_state' when we detect traffic light
+            return closest_tl_wpt, TrafficLight.RED
         else:
             return -1, TrafficLight.UNKNOWN
 

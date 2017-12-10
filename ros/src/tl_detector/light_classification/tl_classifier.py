@@ -4,11 +4,11 @@ from styx_msgs.msg import TrafficLight
 
 
 import cv2
-import numpy      as np
+import numpy as np
 import tensorflow as tf
-from   keras                    import backend as K
-from   keras                    import layers
-from   keras.models             import load_model
+from keras import backend as K
+from keras import layers
+from keras.models import load_model
 
 class TLClassifier(object):
     def __init__(self):
@@ -21,12 +21,13 @@ class TLClassifier(object):
         K.set_session(sess)
 
         # load model here 
-        # self.model = 
+        # self.model =
 
-        self.get_output = K.function([self.model.layers[0].input, K.learning_phase()],
-                                     [self.model.layers[-1].output])
+        #TODO as soon as we load the model add this again
+        #self.get_output = K.function([self.model.layers[0].input, K.learning_phase()],
+        #                             [self.model.layers[-1].output])
 
-       
+
        # pass
 
     def get_classification(self, image):
@@ -46,9 +47,10 @@ class TLClassifier(object):
         image = np.expand_dims(image, axis=0)
         image = image.astype(dtype=np.float64, copy=False)
         image = image / 255.0
-        
-        pred = self.get_output([image, 0])[0]
-        pred = np.argmax(pred)
+
+        #TODO implement this
+        #pred = self.get_output([image, 0])[0]
+        #pred = np.argmax(pred)
 
         # determine light color based on what is returned by model
         # assuming model returns a number  0 == green, 1 == unknown, 2 == red, 3 == yellow

@@ -3,6 +3,7 @@
 import rospy
 from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
+from std_msgs.msg import Int32
 
 import math
 
@@ -32,15 +33,16 @@ class WaypointUpdater(object):
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
-
+        rospy.Subscriber('/traffic_waypoint', Int32, self.traffic_cb)
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
         # TODO: Add other member variables you need below
         self.waypoints = None
-        self.waypoints_lenght = None
+        self.waypoints_length = None
         self.current_pose = None
         self.idx_of_nearest = None
+        self.red_light_wp = -1
 
         rospy.loginfo("Init")
         rospy.spin()
@@ -58,13 +60,15 @@ class WaypointUpdater(object):
         rospy.loginfo("Waypoints cb")
         if self.waypoints is None:
             self.waypoints = msg.waypoints
-            self.waypoints_lenght = len(msg.waypoints)
+            self.waypoints_length = len(msg.waypoints)
             self.create_final_waypoints()
         pass
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
-        pass
+        self.red_light_wp = msg.data
+        rospy.loginfo("Hey id %i!!!!!!!!!!!!", msg.data)
+        self.create_final_waypoints()
 
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later
@@ -88,7 +92,7 @@ class WaypointUpdater(object):
 
     def get_initial_nearest_waypoint(self):
         min_dist = float("inf")
-        for idx in range(self.waypoints_lenght):
+        for idx in range(self.waypoints_length):
             d = self.euclidean_distance(self.waypoints[idx].pose.pose.position, self.current_pose.position)
             if d < min_dist:
                 min_dist = d
@@ -102,12 +106,22 @@ class WaypointUpdater(object):
 
             if self.idx_of_nearest is not None:
                 d1 = self.euclidean_distance(self.waypoints[self.idx_of_nearest].pose.pose.position, self.current_pose.position)
-                d2 = self.euclidean_distance(self.waypoints[(self.idx_of_nearest+1) % self.waypoints_lenght].pose.pose.position, self.current_pose.position)
+                d2 = self.euclidean_distance(self.waypoints[(self.idx_of_nearest+1) % self.waypoints_length].pose.pose.position, self.current_pose.position)
                 if d2 < d1:
                     self.idx_of_nearest += 1
-                    self.idx_of_nearest %= self.waypoints_lenght
+                    self.idx_of_nearest %= self.waypoints_length
 
-                next_waypoints = [self.waypoints[i] for i in range(len(self.waypoints)) if self.idx_of_nearest <= i < self.idx_of_nearest + LOOKAHEAD_WPS]
+                if self.red_light_wp is not -1:
+                    rospy.loginfo("RED LIGHT in %i  next_wp %i!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n", self.red_light_wp, self.idx_of_nearest)
+
+                #next_waypoints = [self.waypoints[i] for i in range(len(self.waypoints)) if self.idx_of_nearest <= i < self.idx_of_nearest + LOOKAHEAD_WPS]
+                stop = self.idx_of_nearest + LOOKAHEAD_WPS
+                if stop < self.waypoints_length:
+                    next_waypoints = self.waypoints[self.idx_of_nearest:self.idx_of_nearest + LOOKAHEAD_WPS]
+                else:
+                    stop = stop % self.waypoints_length
+                    next_waypoints = self.waypoints[self.idx_of_nearest:] + self.waypoints[:stop]
+
                 lane = Lane()
                 lane.waypoints = next_waypoints
                 lane.header.frame_id = '/world'

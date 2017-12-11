@@ -11,7 +11,7 @@ import tf
 import cv2
 import yaml
 
-# latest updates by Nalini 12/9/2017
+# latest updates by Nalini 12/11/2017
 # not completed 
 
 
@@ -223,23 +223,23 @@ class TLDetector(object):
                     # continue
 
                 # find light color and if not red move on to the next one
-                # removing red light check for now - Nalini 12/9/2017
-                light_state = self.get_light_state(light)
-                if light_state != TrafficLight.RED:
-                    continue
+                # removing red light check for now - Nalini 12/11/2017
+                # light_state = self.get_light_state(light)
+                # if light_state != TrafficLight.RED:
+                    # continue
 
                 # if light is red get the closest waypoint to the light
-                closest__light_wp_index = self.get_closest_waypoint(light.pose.pose)
+                closest_light_wp_index = self.get_closest_waypoint(light.pose.pose)
 
                 # if the light waypooint is behind the car waypoint, move on to the next one
-                if closest__light_wp_index < waypoint_car_idx:
+                if closest_light_wp_index < waypoint_car_idx:
                     continue
 
-                closest_waypoint = self.waypoints[closest__light_wp_index]
+                closest_waypoint = self.waypoints[closest_light_wp_index]
 
                 # find the light that is closest to the car and return the color of that light
-                if closest_tl_wpt < 0 or closest__light_wp_index  < closest_tl_wpt:
-                    closest_tl_wpt = closest__light_wp_index
+                if closest_tl_wpt < 0 or closest_light_wp_index  < closest_tl_wpt:
+                    closest_tl_wpt = closest_light_wp_index
                     light_state = self.get_light_state(light)
 
                 # Create a list of waypoints close to the lights

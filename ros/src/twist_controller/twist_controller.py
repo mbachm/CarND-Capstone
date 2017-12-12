@@ -18,11 +18,11 @@ class Controller(object):
         self.decel_limit = kwargs['decel_limit']
         self.accel_limit = kwargs['accel_limit']
         self.pid_controller = PID(Kp, Ki, Kd, mn = self.decel_limit, mx = self.accel_limit)
-        self.yaw_controller = YawController(self.wheel_base, 
-        								 self.steer_ratio, 
-        								 self.min_speed, 
-        								 self.max_lat_accel, 
-        								 self.max_steer_angle)
+        self.yaw_controller = YawController(self.wheel_base,
+                                            self.steer_ratio,
+                                            self.min_speed,
+                                            self.max_lat_accel,
+                                            self.max_steer_angle)
         
 
     def control(self, current_velocity, twist_cmd, dbw_enabled, sample_time):
@@ -33,7 +33,7 @@ class Controller(object):
         steering = 0.0
 
         if not all((current_velocity, twist_cmd)):
-        	return throttle, brake, steering
+            return throttle, brake, steering
 
         linear_velocity_error = twist_cmd.twist.linear.x - current_velocity.twist.linear.x
 
@@ -41,7 +41,7 @@ class Controller(object):
         throttle = self.pid_controller.step(linear_velocity_error, sample_time)
         brake = 0.0
         steering = self.yaw_controller.get_steering(twist_cmd.twist.linear.x,
-        											twist_cmd.twist.angular.z,
-        											current_velocity.twist.linear.x)
+                                                    twist_cmd.twist.angular.z,
+                                                    current_velocity.twist.linear.x)
 
         return throttle, brake, steering

@@ -37,27 +37,22 @@ class WaypointUpdater(object):
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
-        # TODO: Add other member variables you need below
         self.waypoints = None
         self.waypoints_length = None
         self.current_pose = None
         self.idx_of_nearest = None
         self.red_light_wp = -1
 
-        rospy.loginfo("Init")
+        rospy.loginfo("Init WaypointUpdater")
         rospy.spin()
 
     def pose_cb(self, msg):
-        # TODO: Implement
-        rospy.loginfo("Pose cb")
         self.current_pose = msg.pose
         if self.waypoints is not None:
             self.create_final_waypoints()
         pass
 
     def waypoints_cb(self, msg):
-        # TODO: Implement
-        rospy.loginfo("Waypoints cb")
         if self.waypoints is None:
             self.waypoints = msg.waypoints
             self.waypoints_length = len(msg.waypoints)

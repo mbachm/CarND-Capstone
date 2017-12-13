@@ -57,7 +57,7 @@ class DBWNode(object):
                    'vehicle_mass': vehicle_mass,
                    'wheel_radius': wheel_radius,
                    'fuel_capacity': fuel_capacity,
-                   'brake_deadband': break_deadband,
+                   'brake_deadband': brake_deadband,
                 }
 
         self.steer_pub = rospy.Publisher('/vehicle/steering_cmd',

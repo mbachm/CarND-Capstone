@@ -25,6 +25,7 @@ class Controller(object):
                                             self.max_lat_accel,
                                             self.max_steer_angle)
         self.vehicle_mass = kwargs['vehicle_mass'] + kwargs['fuel_capacity'] * GAS_DENSITY
+        self.brake_deadband = kwargs['brake_deadband']
 
 
     def control(self, current_velocity, twist_cmd, dbw_enabled, sample_time):
@@ -42,12 +43,14 @@ class Controller(object):
         throttle = self.pid_controller.step(linear_velocity_error, sample_time)
 
         throttle = max(0.0, min(1.0, throttle))
+        brake = 0.0
+
         if linear_velocity_error < 0:
             # brake value = weight of vehicle * deceleration (e.g. 4 m/s/s) * wheel has a radius
-            brake = self.vehicle_mass * -linear_velocity_error/sample_time * self.wheel_radius
             throttle = 0.0
-        else:
-            brake = 0.0
+            brake = self.vehicle_mass * -linear_velocity_error/sample_time * self.wheel_radius
+            if brake < self.brake_deadband:
+                brake = self.brake_deadband
 
         steering = self.yaw_controller.get_steering(twist_cmd.twist.linear.x,
                                                     twist_cmd.twist.angular.z,

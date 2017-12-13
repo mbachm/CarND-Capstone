@@ -53,7 +53,10 @@ class DBWNode(object):
                    'max_lat_accel': max_lat_accel,
                    'max_steer_angle': max_steer_angle,
                    'decel_limit': decel_limit,
-                   'accel_limit': accel_limit
+                   'accel_limit': accel_limit,
+                   'vehicle_mass': vehicle_mass,
+                   'wheel_radius': wheel_radius,
+                   'fuel_capacity': fuel_capacity
                 }
 
         self.steer_pub = rospy.Publisher('/vehicle/steering_cmd',
@@ -76,7 +79,6 @@ class DBWNode(object):
         rospy.Subscriber('/twist_cmd', TwistStamped, self.twist_cmd_callback)
         rospy.Subscriber('/vehicle/dbw_enabled', Bool, self.dbw_enabled_callback)
 
-
         self.loop()
 
     def loop(self):
@@ -91,6 +93,15 @@ class DBWNode(object):
                                                                 self.twist_cmd, 
                                                                 self.dbw_enabled,
                                                                 sample_time)
+
+            # For debugging, remove as soon as brake is implemented
+            if self.twist_cmd is not None and self.current_velocity is not None:
+                rospy.loginfo('Target velocity: %s', self.twist_cmd.twist.linear.x)
+                rospy.loginfo('Current velocity: %s', self.current_velocity.twist.linear.x)
+                rospy.loginfo('Velocity delta: %s', self.twist_cmd.twist.linear.x - self.current_velocity.twist.linear.x)
+                rospy.loginfo('Throttle value: %s', throttle)
+                rospy.loginfo('Brake value: %s', brake)
+                rospy.loginfo('Steering value: %s', steering)
 
             if self.dbw_enabled:
                 self.publish(throttle, brake, steering)
@@ -112,7 +123,7 @@ class DBWNode(object):
         bcmd = BrakeCmd()
         bcmd.enable = True
         bcmd.pedal_cmd_type = BrakeCmd.CMD_TORQUE
-        bcmd.pedal_cmd = brake
+        bcmd.pedal_cmd = min(brake, BrakeCmd.TORQUE_MAX)
         self.brake_pub.publish(bcmd)
 
     def current_velocity_callback(self, msg):

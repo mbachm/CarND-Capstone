@@ -6,20 +6,21 @@ import os
 import sys
 import tensorflow as tf
 
-# object detection imports
-from object_detection.utils import label_map_util
+
+# added by Nalini 12/14/2017
+
 
 class TLClassifier(object):
     def __init__(self):
         #TODO load classifier
 
-        # add code to check if this is the real world or simulator and then call sim_model or real_model
- 
+
 
     def sim_model(image):
     
         # code for the simulator model     
         # sim_model = 'add path to the model'
+
         detection_graph = tf.Graph()
 
         with detection_graph.as_default():
@@ -67,7 +68,24 @@ class TLClassifier(object):
                                 if scores is None or scores[i] > min_score_thresh:
 
                                         # use class and score to detect the red light
+                                        class_number = classes[i]
+                                        # if 2 is red, identify that
+                                        # assuming 1 == green, 4 == off, 2 == red, 3 == yellow
+                                        if class_number == 2:
+                                                prediction = TrafficLight.RED
+                                        elif class_number == 1:
+                                                prediction = TrafficLight.GREEN
+                                        elif class_number == 3:
+                                                prediction = TrafficLight.YELLOW
+                                        else:
+                                                prediction = TrafficLight.UNKNOWN
+                                        
+        return prediction    
 
+
+    def real_model(image):
+    
+        # add real model code here    
 
     def get_classification(self, image):
         """Determines the color of the traffic light in the image
@@ -78,5 +96,17 @@ class TLClassifier(object):
         """
         #TODO implement light color prediction
 
+        # To do later: add code to check if this is the real world or simulator and then call sim_model or real_model
+        # if this is the simulator:
+                # call sim_model
+                # light_color = 
+        # else:
+                # call real_model
+                # light_color = 
 
+        predicted_color = sim_model(image)
+ 
+
+        # to do: add this later
+        # return predicted_color
         return TrafficLight.UNKNOWN

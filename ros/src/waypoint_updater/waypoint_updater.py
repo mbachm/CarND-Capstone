@@ -57,7 +57,7 @@ class WaypointUpdater(object):
         rospy.loginfo("Pose cb")
         self.current_pose = msg.pose
         if self.waypoints is not None:
-            self.create_final_waypoints()
+            self.create_waypoints()
         pass
 
     def waypoints_cb(self, msg):
@@ -66,14 +66,14 @@ class WaypointUpdater(object):
         if self.waypoints is None:
             self.waypoints = msg.waypoints
             self.waypoints_length = len(msg.waypoints)
-            self.create_final_waypoints()
+            self.create_waypoints()
         pass
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
         self.red_light_wp = msg.data
         self.traffic_time_received = rospy.get_time()
-        #self.create_final_waypoints()
+        #self.create_waypoints()
 
     def current_velocity_cb(self, msg):
         # TODO: Callback for /current_velocity message. Implement
@@ -109,37 +109,49 @@ class WaypointUpdater(object):
                 min_dist = d
                 self.idx_of_nearest = idx
 
-    def create_final_waypoints(self):
-        if  self.current_pose is not None:
+    def check_if_car_already_passed_next_waypoint(self):
+        map_x = self.waypoints[self.idx_of_nearest].pose.pose.position.x
+        map_y = self.waypoints[self.idx_of_nearest].pose.pose.position.y
 
-            self.get_nearest_waypoint()
+        heading = math.atan2((map_y - self.current_pose.position.y), (map_x - self.current_pose.position.x))
+        quaternion = (self.current_pose.orientation.x, self.current_pose.orientation.y, self.current_pose.orientation.z, self.current_pose.orientation.w)
+        _, _, yaw = tf.transformations.euler_from_quaternion(quaternion)
+        angle = abs(yaw - heading)
 
-            map_x = self.waypoints[self.idx_of_nearest].pose.pose.position.x
-            map_y = self.waypoints[self.idx_of_nearest].pose.pose.position.y
+        if angle > (math.pi / 4):
+            rospy.loginfo("add 1 to index")
+            self.idx_of_nearest += 1
 
-            heading = math.atan2((map_y - self.current_pose.position.y), (map_x - self.current_pose.position.x))
-            quaternion = (self.current_pose.orientation.x, self.current_pose.orientation.y, self.current_pose.orientation.z, self.current_pose.orientation.w)
-            _, _, yaw = tf.transformations.euler_from_quaternion(quaternion)
-            angle = abs(yaw - heading)
 
-            if angle > (math.pi / 4):
-                self.idx_of_nearest += 1
+    def create_waypoints(self):
+        if self.current_pose is not None:
+            if self.idx_of_nearest is None:
+                #initial waypoint search
+                self.get_nearest_waypoint()
 
-            stop = self.idx_of_nearest + LOOKAHEAD_WPS
-            next_waypoints = self.waypoints[self.idx_of_nearest:stop]
+            if self.idx_of_nearest is not None:
+                self.check_if_car_already_passed_next_waypoint()
 
-            if self.red_light_wp < 0:
+                stop = self.idx_of_nearest + LOOKAHEAD_WPS
+                next_waypoints = self.waypoints[self.idx_of_nearest:stop]
+
+                # Use this code only as long as our red light detection does not work
                 for i in range(len(next_waypoints)-1):
                     self.set_waypoint_velocity(next_waypoints, i, TARGET_SPEED_METER_PER_SECOND)
-            else:
-                redlight_lookahead_index = max(0, self.red_light_wp - self.idx_of_nearest)
-                next_waypoints = self.decelerate(next_waypoints, redlight_lookahead_index)
 
-            lane = Lane()
-            lane.waypoints = next_waypoints
-            lane.header.frame_id = '/world'
+                """ Use this code as soon as we detect red lights!
+                if self.red_light_wp < 0:
+                    for i in range(len(next_waypoints)-1):
+                        self.set_waypoint_velocity(next_waypoints, i, TARGET_SPEED_METER_PER_SECOND)
+                else:
+                    redlight_lookahead_index = max(0, self.red_light_wp - self.idx_of_nearest)
+                    next_waypoints = self.decelerate(next_waypoints, redlight_lookahead_index)
+                """
+                lane = Lane()
+                lane.waypoints = next_waypoints
+                lane.header.frame_id = '/world'
 
-            self.final_waypoints_pub.publish(lane)
+                self.final_waypoints_pub.publish(lane)
 
     def decelerate(self, waypoints, redlight_lookahead_index):
 

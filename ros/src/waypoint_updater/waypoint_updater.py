@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 import rospy
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, TwistStamped
 from styx_msgs.msg import Lane, Waypoint
 from std_msgs.msg import Int32
-
+import tf
 import math
 
 '''
@@ -23,7 +23,9 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
 LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
-
+MAX_DECEL = 0.5
+STOP_DIST = 5.0
+TARGET_SPEED_METER_PER_SECOND = 10 * 1609.34/3600
 
 class WaypointUpdater(object):
     def __init__(self):
@@ -34,25 +36,33 @@ class WaypointUpdater(object):
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
         rospy.Subscriber('/traffic_waypoint', Int32, self.traffic_cb)
+        rospy.Subscriber('/current_velocity', TwistStamped, self.current_velocity_cb)
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
+        # TODO: Add other member variables you need below
         self.waypoints = None
         self.waypoints_length = None
         self.current_pose = None
+        self.current_velocity = None
         self.idx_of_nearest = None
         self.red_light_wp = -1
+        self.traffic_time_received = rospy.get_time()
 
-        rospy.loginfo("Init WaypointUpdater")
+        rospy.loginfo("Init")
         rospy.spin()
 
     def pose_cb(self, msg):
+        # TODO: Implement
+        rospy.loginfo("Pose cb")
         self.current_pose = msg.pose
         if self.waypoints is not None:
             self.create_final_waypoints()
         pass
 
     def waypoints_cb(self, msg):
+        # TODO: Implement
+        rospy.loginfo("Waypoints cb")
         if self.waypoints is None:
             self.waypoints = msg.waypoints
             self.waypoints_length = len(msg.waypoints)
@@ -62,8 +72,14 @@ class WaypointUpdater(object):
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
         self.red_light_wp = msg.data
-        rospy.loginfo("Hey id %i!!!!!!!!!!!!", msg.data)
-        self.create_final_waypoints()
+        self.traffic_time_received = rospy.get_time()
+        #self.create_final_waypoints()
+
+    def current_velocity_cb(self, msg):
+        # TODO: Callback for /current_velocity message. Implement
+        self.current_velocity = msg.twist.linear.x
+        rospy.loginfo("Current velocity %i", self.current_velocity)
+
 
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later
@@ -85,7 +101,7 @@ class WaypointUpdater(object):
             wp1 = i
         return dist
 
-    def get_initial_nearest_waypoint(self):
+    def get_nearest_waypoint(self):
         min_dist = float("inf")
         for idx in range(self.waypoints_length):
             d = self.euclidean_distance(self.waypoints[idx].pose.pose.position, self.current_pose.position)
@@ -94,37 +110,62 @@ class WaypointUpdater(object):
                 self.idx_of_nearest = idx
 
     def create_final_waypoints(self):
-        if self.waypoints is not None and self.current_pose is not None:
-            if self.idx_of_nearest is None:
-                #initial waypoint search
-                self.get_initial_nearest_waypoint()
+        if  self.current_pose is not None:
 
-            if self.idx_of_nearest is not None:
-                d1 = self.euclidean_distance(self.waypoints[self.idx_of_nearest].pose.pose.position, self.current_pose.position)
-                d2 = self.euclidean_distance(self.waypoints[(self.idx_of_nearest+1) % self.waypoints_length].pose.pose.position, self.current_pose.position)
-                if d2 < d1:
-                    self.idx_of_nearest += 1
-                    self.idx_of_nearest %= self.waypoints_length
+            self.get_nearest_waypoint()
 
-                if self.red_light_wp is not -1:
-                    rospy.loginfo("RED LIGHT in %i  next_wp %i!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n", self.red_light_wp, self.idx_of_nearest)
+            map_x = self.waypoints[self.idx_of_nearest].pose.pose.position.x
+            map_y = self.waypoints[self.idx_of_nearest].pose.pose.position.y
 
-                #next_waypoints = [self.waypoints[i] for i in range(len(self.waypoints)) if self.idx_of_nearest <= i < self.idx_of_nearest + LOOKAHEAD_WPS]
-                stop = self.idx_of_nearest + LOOKAHEAD_WPS
-                if stop < self.waypoints_length:
-                    next_waypoints = self.waypoints[self.idx_of_nearest:self.idx_of_nearest + LOOKAHEAD_WPS]
-                else:
-                    stop = stop % self.waypoints_length
-                    next_waypoints = self.waypoints[self.idx_of_nearest:] + self.waypoints[:stop]
+            heading = math.atan2((map_y - self.current_pose.position.y), (map_x - self.current_pose.position.x))
+            quaternion = (self.current_pose.orientation.x, self.current_pose.orientation.y, self.current_pose.orientation.z, self.current_pose.orientation.w)
+            _, _, yaw = tf.transformations.euler_from_quaternion(quaternion)
+            angle = abs(yaw - heading)
 
-                lane = Lane()
-                lane.waypoints = next_waypoints
-                lane.header.frame_id = '/world'
+            if angle > (math.pi / 4):
+                self.idx_of_nearest += 1
 
-                self.final_waypoints_pub.publish(lane)
+            stop = self.idx_of_nearest + LOOKAHEAD_WPS
+            next_waypoints = self.waypoints[self.idx_of_nearest:stop]
 
+            if self.red_light_wp < 0:
+                for i in range(len(next_waypoints)-1):
+                    self.set_waypoint_velocity(next_waypoints, i, TARGET_SPEED_METER_PER_SECOND)
+            else:
+                redlight_lookahead_index = max(0, self.red_light_wp - self.idx_of_nearest)
+                next_waypoints = self.decelerate(next_waypoints, redlight_lookahead_index)
 
+            lane = Lane()
+            lane.waypoints = next_waypoints
+            lane.header.frame_id = '/world'
 
+            self.final_waypoints_pub.publish(lane)
+
+    def decelerate(self, waypoints, redlight_lookahead_index):
+
+        if len(waypoints) < 1:
+            return []
+
+        last_wp = waypoints[-1]
+        last_wp.twist.twist.linear.x = 0
+
+        first_wp = waypoints[0]
+
+        total_dist = self.euclidean_distance(first_wp.pose.pose.position, last_wp.pose.pose.position)
+
+        for index, wp in enumerate(waypoints):
+            if index > redlight_lookahead_index:
+                vel = 0
+            else:
+                dist = self.euclidean_distance(wp.pose.pose.position, last_wp.pose.pose.position)
+                dist = max(0, dist - STOP_DIST)
+                vel = math.sqrt(2*MAX_DECEL*dist)
+                if vel < 1.0:
+                    vel = 0.0
+
+            wp.twist.twist.linear.x = min(vel, wp.twist.twist.linear.x)
+
+        return waypoints
 
 
 if __name__ == '__main__':

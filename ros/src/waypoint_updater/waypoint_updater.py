@@ -102,12 +102,16 @@ class WaypointUpdater(object):
         return dist
 
     def get_nearest_waypoint(self):
-        min_dist = float("inf")
-        for idx in range(self.waypoints_length):
-            d = self.euclidean_distance(self.waypoints[idx].pose.pose.position, self.current_pose.position)
-            if d < min_dist:
-                min_dist = d
-                self.idx_of_nearest = idx
+        closest_len = 100000
+        closest_waypoint = 0
+        for index, waypoint in enumerate(self.waypoints):
+            dist = self.euclidean_distance(self.current_pose.position, waypoint.pose.pose.position)
+            if dist < closest_len:
+                closest_len = dist
+                closest_waypoint = index
+
+        self.idx_of_nearest = closest_waypoint
+        self.check_if_car_already_passed_next_waypoint()
 
     def check_if_car_already_passed_next_waypoint(self):
         map_x = self.waypoints[self.idx_of_nearest].pose.pose.position.x
@@ -125,33 +129,28 @@ class WaypointUpdater(object):
 
     def create_waypoints(self):
         if self.current_pose is not None:
-            if self.idx_of_nearest is None:
-                #initial waypoint search
-                self.get_nearest_waypoint()
+            self.get_nearest_waypoint()
 
-            if self.idx_of_nearest is not None:
-                self.check_if_car_already_passed_next_waypoint()
+            stop = self.idx_of_nearest + LOOKAHEAD_WPS
+            next_waypoints = self.waypoints[self.idx_of_nearest:stop]
 
-                stop = self.idx_of_nearest + LOOKAHEAD_WPS
-                next_waypoints = self.waypoints[self.idx_of_nearest:stop]
+            # Use this code only as long as our red light detection does not work
+            for i in range(len(next_waypoints)-1):
+                self.set_waypoint_velocity(next_waypoints, i, TARGET_SPEED_METER_PER_SECOND)
 
-                # Use this code only as long as our red light detection does not work
+            """ Use this code as soon as we detect red lights!
+            if self.red_light_wp < 0:
                 for i in range(len(next_waypoints)-1):
                     self.set_waypoint_velocity(next_waypoints, i, TARGET_SPEED_METER_PER_SECOND)
+            else:
+                redlight_lookahead_index = max(0, self.red_light_wp - self.idx_of_nearest)
+                next_waypoints = self.decelerate(next_waypoints, redlight_lookahead_index)
+            """
+            lane = Lane()
+            lane.waypoints = next_waypoints
+            lane.header.frame_id = '/world'
 
-                """ Use this code as soon as we detect red lights!
-                if self.red_light_wp < 0:
-                    for i in range(len(next_waypoints)-1):
-                        self.set_waypoint_velocity(next_waypoints, i, TARGET_SPEED_METER_PER_SECOND)
-                else:
-                    redlight_lookahead_index = max(0, self.red_light_wp - self.idx_of_nearest)
-                    next_waypoints = self.decelerate(next_waypoints, redlight_lookahead_index)
-                """
-                lane = Lane()
-                lane.waypoints = next_waypoints
-                lane.header.frame_id = '/world'
-
-                self.final_waypoints_pub.publish(lane)
+            self.final_waypoints_pub.publish(lane)
 
     def decelerate(self, waypoints, redlight_lookahead_index):
 

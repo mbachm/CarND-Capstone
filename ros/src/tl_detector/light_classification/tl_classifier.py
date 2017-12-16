@@ -12,9 +12,9 @@ import tensorflow as tf
 
 class TLClassifier(object):
 	def __init__(self):
-	#TODO load classifier
-	# code for the simulator model     
-	# model = 'add path to the model'
+		#TODO load classifier
+		# code for the simulator model     
+		# model = 'add path to the model'
 
 
 	def sim_model(image):

@@ -3,8 +3,8 @@ from yaw_controller import YawController
 
 GAS_DENSITY = 2.858
 ONE_MPH = 0.44704
-Kp = 2
-Ki = 0.1
+Kp = 1
+Ki = 0
 Kd = 0.05
 
 class Controller(object):
@@ -41,9 +41,7 @@ class Controller(object):
         linear_velocity_error = twist_cmd.twist.linear.x - current_velocity.twist.linear.x
 
         throttle = self.pid_controller.step(linear_velocity_error, sample_time)
-
         throttle = max(0.0, min(1.0, throttle))
-        brake = 0.0
 
         if linear_velocity_error < 0:
             # brake value = weight of vehicle * deceleration (e.g. 4 m/s/s) * wheel has a radius

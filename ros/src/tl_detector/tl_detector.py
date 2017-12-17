@@ -257,7 +257,8 @@ class TLDetector(object):
         # changing as suggested by Jingjing - nalini 12/9/2017
         if closest_tl_wpt != -1:
             #TODO: Change back to 'return closest_tl_wpt, light_state' when we detect traffic light
-            return closest_tl_wpt, TrafficLight.RED
+            #return closest_tl_wpt, TrafficLight.RED
+		return closest_tl_wpt, light_state
         else:
             return -1, TrafficLight.UNKNOWN
 

@@ -7,7 +7,7 @@ import sys
 import tensorflow as tf
 
 
-# added by Nalini 12/17/2017
+# added by Nalini 12/18/2017
 # added model, testing model
 
 
@@ -27,9 +27,10 @@ class TLClassifier(object):
 		"""
 		#TODO implement light color prediction
 
-		print("In classifier 4")
+		print("In classifier 6")
 
 		model_path = '/home/student/CarND-Capstone/ros/src/tl_detector/light_classification/Models/faster_rcnn-traffic-udacity_sim/frozen_inference_graph.pb'
+
 
 		# for now get color for simulator
 		# if the model is able to classify any imagem then we can just use this one method for all images
@@ -62,14 +63,15 @@ class TLClassifier(object):
 			detection_classes = detection_graph.get_tensor_by_name('detection_classes:0')
 			num_detections = detection_graph.get_tensor_by_name('num_detections:0')
 
-			print("Image Size=", image.size)
+			print("Image Size=", image.shape)
 
-			(im_width, im_height) = image.size
+			im_width, im_height, channels = image.shape
 
-			image_np = np.array(image.getdata()).reshape((im_height, im_width, 3)).astype(np.uint8)
+			# image_np = np.array(image.getdata()).reshape((im_height, im_width, 3)).astype(np.uint8)
+
 
 			# Expand dimensions since the model expects images to have shape: [1, None, None, 3]
-			image_np_expanded = np.expand_dims(image_np, axis=0)
+			image_np_expanded = np.expand_dims(image, axis=0)
 
 
 			# Actual detection.
@@ -81,8 +83,13 @@ class TLClassifier(object):
 			scores = np.squeeze(scores)
 			classes = np.squeeze(classes).astype(np.int32)
 
+			
+
+			prediction = TrafficLight.UNKNOWN
 
 			min_score_thresh = .80
+			print("min score thresh=", min_score_thresh)
+
 			for i in range(boxes.shape[0]):
 				if scores is None or scores[i] > min_score_thresh:
 
@@ -99,7 +106,7 @@ class TLClassifier(object):
 					else:
 						prediction = TrafficLight.UNKNOWN
 
-			print("Prediction=", prediction)
+		print("Prediction=", prediction)
 
 		# return TrafficLight.UNKNOWN
 		return prediction

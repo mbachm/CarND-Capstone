@@ -30,7 +30,7 @@ class WaypointLoader(object):
         if os.path.isfile(path):
             waypoints = self.load_waypoints(path)
             self.publish(waypoints)
-            rospy.loginfo('Waypoint Loded')
+            rospy.loginfo('Waypoint loaded')
         else:
             rospy.logerr('%s is not a file', path)
 
@@ -52,8 +52,8 @@ class WaypointLoader(object):
                 q = self.quaternion_from_yaw(float(wp['yaw']))
                 p.pose.pose.orientation = Quaternion(*q)
                 p.twist.twist.linear.x = float(self.velocity)
-
                 waypoints.append(p)
+
         return self.decelerate(waypoints)
 
     def distance(self, p1, p2):

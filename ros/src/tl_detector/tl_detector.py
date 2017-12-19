@@ -210,6 +210,9 @@ class TLDetector(object):
 
             # get closest waypoint to the car
             waypoint_car_idx = self.get_closest_waypoint(self.car_pose.pose)
+	
+
+	    print("ClosestWaypointCar=", waypoint_car_idx)
 
             # check all the lights
             for i, light in enumerate(self.lights):
@@ -252,6 +255,7 @@ class TLDetector(object):
 
         # end checking car_pose
 
+	# print("Light State In Detector=", light_state)
 
         #send back the index of the waypoint closest to the car and light
         # changing as suggested by Jingjing - nalini 12/9/2017

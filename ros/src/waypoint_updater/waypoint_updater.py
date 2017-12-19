@@ -21,7 +21,7 @@ as well as to verify your TL classifier.
 LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
 MAX_DECEL = 0.5
 STOP_DIST = 30.0
-TARGET_SPEED_METER_PER_SECOND = 10 * 1609.34/3600
+TARGET_SPEED_METER_PER_SECOND = 1609.34/3600
 
 class WaypointUpdater(object):
     def __init__(self):
@@ -38,7 +38,7 @@ class WaypointUpdater(object):
         self.current_pose = None
         self.waypoints = None
         self.red_light_wp = None
-
+        self.start_velocity = None
 
         rospy.spin()
 
@@ -51,6 +51,7 @@ class WaypointUpdater(object):
         # do this once and not all the time
         if self.waypoints is None:
             self.waypoints = msg.waypoints
+            self.start_velocity = self.waypoints[0].twist.twist.linear.x
 
     def traffic_cb(self, msg):
         self.red_light_wp = msg.data
@@ -98,12 +99,8 @@ class WaypointUpdater(object):
         if len(waypoints) < 1:
             return []
 
-        first = waypoints[0]
         last = waypoints[redlight_index]
-
         last.twist.twist.linear.x = 0.
-        total_dist = self.euclidean_distance(first.pose.pose.position, last.pose.pose.position)
-        start_vel = first.twist.twist.linear.x
 
         for index, wp in enumerate(waypoints):
 
@@ -127,7 +124,7 @@ class WaypointUpdater(object):
 
             if self.red_light_wp is None or self.red_light_wp < 0:
                 for i in range(len(next_waypoints) - 1):
-                    self.set_waypoint_velocity(next_waypoints, i, TARGET_SPEED_METER_PER_SECOND)
+                    self.set_waypoint_velocity(next_waypoints, i, self.start_velocity * TARGET_SPEED_METER_PER_SECOND)
 
             else:
                 redlight_lookahead_index = max(0, self.red_light_wp - idx_of_nearest_wp)

@@ -31,6 +31,9 @@ class TLDetector(object):
         self.car_pose = None
         self.waypoints = None
         self.camera_image = None
+        # Extrem slow startup of TLClassifier(). Perhaps there is a more elegant solution
+        self.light_classifier = None
+        self.has_image = False
         self.lights = []
 
         sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
@@ -177,8 +180,12 @@ class TLDetector(object):
 
         cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
 
-        #Get classification
-        return self.light_classifier.get_classification(cv_image)
+        # Get classification
+        # Extrem slow startup of TLClassifier(). Perhaps there is a more elegant solution
+        if self.light_classifier is not None:
+            return self.light_classifier.get_classification(cv_image)
+        else:
+            return TrafficLight.UNKNOWN
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its
@@ -210,9 +217,8 @@ class TLDetector(object):
 
             # get closest waypoint to the car
             waypoint_car_idx = self.get_closest_waypoint(self.car_pose.pose)
-	
 
-	    print("ClosestWaypointCar=", waypoint_car_idx)
+            print("ClosestWaypointCar=", waypoint_car_idx)
 
             # check all the lights
             for i, light in enumerate(self.lights):
@@ -255,14 +261,14 @@ class TLDetector(object):
 
         # end checking car_pose
 
-	# print("Light State In Detector=", light_state)
+        # print("Light State In Detector=", light_state)
 
         #send back the index of the waypoint closest to the car and light
         # changing as suggested by Jingjing - nalini 12/9/2017
         if closest_tl_wpt != -1:
             #TODO: Change back to 'return closest_tl_wpt, light_state' when we detect traffic light
             #return closest_tl_wpt, TrafficLight.RED
-		return closest_tl_wpt, light_state
+            return closest_tl_wpt, light_state
         else:
             return -1, TrafficLight.UNKNOWN
 

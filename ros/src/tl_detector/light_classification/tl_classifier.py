@@ -5,6 +5,7 @@ import numpy as np
 import os
 import sys
 import tensorflow as tf
+from styx_msgs.msg import TrafficLight
 
 
 # added by Nalini 12/18/2017
@@ -27,7 +28,7 @@ class TLClassifier(object):
 		"""
 		#TODO implement light color prediction
 
-		print("In classifier 6")
+		# print("In classifier 11")
 
 		model_path = '/home/student/CarND-Capstone/ros/src/tl_detector/light_classification/Models/faster_rcnn-traffic-udacity_sim/frozen_inference_graph.pb'
 
@@ -85,31 +86,34 @@ class TLClassifier(object):
 
 			
 
-			prediction = TrafficLight.UNKNOWN
+			# prediction = TrafficLight.UNKNOWN
 
 			min_score_thresh = .80
-			print("min score thresh=", min_score_thresh)
-
+			
 			for i in range(boxes.shape[0]):
 				if scores is None or scores[i] > min_score_thresh:
 
 					# use class and score to detect the red light
 					class_number = classes[i]
+
+					print("Class Number=", class_number)
+
 					# if 2 is red, identify that
 					# assuming 1 == green, 4 == off, 2 == red, 3 == yellow
 					if class_number == 2:
-						prediction = TrafficLight.RED
+						print("in Red=", class_number)
+						return TrafficLight.RED
 					elif class_number == 1:
-						prediction = TrafficLight.GREEN
+						print("in green=", class_number)
+						return TrafficLight.GREEN
 					elif class_number == 3:
-						prediction = TrafficLight.YELLOW
-					else:
-						prediction = TrafficLight.UNKNOWN
+						return TrafficLight.YELLOW
+					
 
-		print("Prediction=", prediction)
+		
 
-		# return TrafficLight.UNKNOWN
-		return prediction
+		return TrafficLight.UNKNOWN
+		
 
 
 	# creating a separate function is not working for now. 	

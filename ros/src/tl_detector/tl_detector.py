@@ -23,7 +23,6 @@ import math
 STATE_COUNT_THRESHOLD = 3
 
 
-
 class TLDetector(object):
     def __init__(self):
         rospy.init_node('tl_detector')
@@ -35,6 +34,10 @@ class TLDetector(object):
         self.light_classifier = None
         self.has_image = False
         self.lights = []
+        self.state = TrafficLight.UNKNOWN
+        self.last_state = TrafficLight.UNKNOWN
+        self.last_wp = -1
+        self.state_count = 0
 
         sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         sub2 = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
@@ -57,11 +60,6 @@ class TLDetector(object):
         self.bridge = CvBridge()
         self.light_classifier = TLClassifier()
         self.listener = tf.TransformListener()
-
-        self.state = TrafficLight.UNKNOWN
-        self.last_state = TrafficLight.UNKNOWN
-        self.last_wp = -1
-        self.state_count = 0
 
         rospy.spin()
 
@@ -149,10 +147,6 @@ class TLDetector(object):
         Modified by Nalini 11/23/2017
 
         """
-        #TODO implement
-
-        # x2, y2, z2 = self.get_light_coordinates(light)
-
         distances = []
 
         for wp in self.waypoints:
@@ -174,8 +168,7 @@ class TLDetector(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        if(not self.has_image):
-            self.prev_light_loc = None
+        if not self.has_image:
             return False
 
         cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
@@ -185,7 +178,8 @@ class TLDetector(object):
         if self.light_classifier is not None:
             return self.light_classifier.get_classification(cv_image)
         else:
-            return TrafficLight.UNKNOWN
+            # Prevent the car to move before our traffic light classifier is ready
+            return TrafficLight.RED
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its
@@ -198,22 +192,9 @@ class TLDetector(object):
             Modified by Nalini 11/24/2017
 
         """
-        
-
-        # List of positions that correspond to the line to stop in front of for a given intersection
-        # stop_line_positions = self.config['stop_line_positions']
-
-
-        closest_wp_final = None
-        closest_wp_dist = float('inf')
-        tl_waypoints = []
         closest_tl_wpt = -1
 
-        if(self.car_pose and self.waypoints):
-
-
-            # Get the car coordinates
-            xc, yc, zc = self.get_car_coordinates(self.car_pose)
+        if self.car_pose and self.waypoints:
 
             # get closest waypoint to the car
             waypoint_car_idx = self.get_closest_waypoint(self.car_pose.pose)
@@ -222,21 +203,6 @@ class TLDetector(object):
 
             # check all the lights
             for i, light in enumerate(self.lights):
-                # find the distance between the light and car
-                xl, yl, zl = self.get_light_coordinates(light)
-                dist = self.distance(xc, yc, zc, xl, yl, zl)
-
-                # if traffic light is too far from the car, move on to the next one
-                # removing as suggested by Jingjing
-                # if dist >= 100:
-                    # continue
-
-                # find light color and if not red move on to the next one
-                # removing red light check for now - Nalini 12/11/2017
-                # light_state = self.get_light_state(light)
-                # if light_state != TrafficLight.RED:
-                    # continue
-
                 # if light is red get the closest waypoint to the light
                 closest_light_wp_index = self.get_closest_waypoint(light.pose.pose)
 
@@ -244,37 +210,20 @@ class TLDetector(object):
                 if closest_light_wp_index < waypoint_car_idx:
                     continue
 
-                closest_waypoint = self.waypoints[closest_light_wp_index]
-
                 # find the light that is closest to the car and return the color of that light
                 if closest_tl_wpt < 0 or closest_light_wp_index  < closest_tl_wpt:
                     closest_tl_wpt = closest_light_wp_index
                     light_state = self.get_light_state(light)
 
-                # Create a list of waypoints close to the lights
-                # Removing for now 12/9/2017
-                # tl_waypoints.append(closest_wp_index)
-
-            # end for loop for checking light
-
-            
-
-        # end checking car_pose
-
-        
-
         #send back the index of the waypoint closest to the car and light
         # changing as suggested by Jingjing - nalini 12/9/2017
         if closest_tl_wpt != -1:
-            #TODO: Change back to 'return closest_tl_wpt, light_state' when we detect traffic light
-            #return closest_tl_wpt, TrafficLight.RED
-	        print("Light State In Detector=", light_state)
+            print("Light State In Detector=", light_state)
             return closest_tl_wpt, light_state
 
         else:
-	        print("Returning unknown")
+            print("Returning unknown")
             return -1, TrafficLight.UNKNOWN
-
 
 
 if __name__ == '__main__':

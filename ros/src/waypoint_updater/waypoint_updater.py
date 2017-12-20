@@ -93,9 +93,7 @@ class WaypointUpdater(object):
 
         return closest_waypoint
 
-
     def decelerate(self, waypoints, redlight_index):
-
         if len(waypoints) < 1:
             return []
 
@@ -105,11 +103,11 @@ class WaypointUpdater(object):
         for index, wp in enumerate(waypoints):
 
             if index > redlight_index:
-                vel = 0
+                vel = 0.
             else:
                 dist = self.euclidean_distance(wp.pose.pose.position, last.pose.pose.position)
-                dist = max(0, dist - STOP_DIST)
-                vel  = math.sqrt(2 * MAX_DECEL * dist)
+                dist = max(0., dist - STOP_DIST)
+                vel = math.sqrt(2 * MAX_DECEL * dist)
                 if vel < 1.:
                     vel = 0.
             wp.twist.twist.linear.x = min(vel, wp.twist.twist.linear.x)
@@ -129,8 +127,6 @@ class WaypointUpdater(object):
             else:
                 redlight_lookahead_index = max(0, self.red_light_wp - idx_of_nearest_wp)
                 next_waypoints = self.decelerate(next_waypoints, redlight_lookahead_index)
-
-
 
             lane = Lane()
             lane.header.frame_id = '/world'

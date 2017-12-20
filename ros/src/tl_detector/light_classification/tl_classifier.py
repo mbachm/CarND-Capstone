@@ -3,9 +3,8 @@ from styx_msgs.msg import TrafficLight
 
 import numpy as np
 import os
-import sys
 import tensorflow as tf
-
+import time
 
 
 # added by Nalini 12/18/2017
@@ -15,14 +14,10 @@ import tensorflow as tf
 class TLClassifier(object):
 
     def __init__(self):
-        #TODO load classifier
+        """Loads the classifier model from source"""
 
-        # code for the simulator model - Michael    
-        # model_path = os.path.join(os.path.dirname(__file__), 'Models/faster_rcnn-traffic-udacity_sim/frozen_inference_graph.pb')
-
-	# code for the simulator model - Chinmaya  
-
-	print("ChinmayaModel 3")  
+        # code for the simulator model - Chinmaya
+        print("ChinmayaModel 3")
         model_path = os.path.join(os.path.dirname(__file__), 'Models/frozen_sim_inception/frozen_inference_graph.pb')
 
         self.detection_graph = tf.Graph()
@@ -59,9 +54,8 @@ class TLClassifier(object):
         #TODO implement light color prediction
         print("Image Size=", image.shape)
 
-        im_width, im_height, channels = image.shape
-
-        # image_np = np.array(image.getdata()).reshape((im_height, im_width, 3)).astype(np.uint8)
+        #TODO remove timer as son as we have solved performance issue
+        now = time.time()
 
         # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
         image_np_expanded = np.expand_dims(image, axis=0)
@@ -75,6 +69,9 @@ class TLClassifier(object):
         boxes = np.squeeze(boxes)
         scores = np.squeeze(scores)
         classes = np.squeeze(classes).astype(np.int32)
+
+        #TODO remove timer as son as we have solved performance issue
+        print("Done detection, time needed=", time.time() - now)
 
         # prediction = TrafficLight.UNKNOWN
         min_score_thresh = .80

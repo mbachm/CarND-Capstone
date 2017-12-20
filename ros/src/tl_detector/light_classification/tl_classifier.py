@@ -5,7 +5,7 @@ import numpy as np
 import os
 import sys
 import tensorflow as tf
-from styx_msgs.msg import TrafficLight
+
 
 
 # added by Nalini 12/18/2017

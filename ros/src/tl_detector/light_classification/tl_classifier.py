@@ -16,12 +16,14 @@ class TLClassifier(object):
 
     def __init__(self):
         #TODO load classifier
-        # code for the simulator model     
-        model_path = os.path.join(os.path.dirname(__file__), 'Models/faster_rcnn-traffic-udacity_sim/frozen_inference_graph.pb')
 
-        # for now get color for simulator
-        # if the model is able to classify any imagem then we can just use this one method for all images
-        # predicted_color = predict_light(image)
+        # code for the simulator model - Michael    
+        # model_path = os.path.join(os.path.dirname(__file__), 'Models/faster_rcnn-traffic-udacity_sim/frozen_inference_graph.pb')
+
+	# code for the simulator model - Chinmaya  
+
+	print("ChinmayaModel 3")  
+        model_path = os.path.join(os.path.dirname(__file__), 'Models/frozen_sim_inception/frozen_inference_graph.pb')
 
         self.detection_graph = tf.Graph()
 

@@ -243,7 +243,7 @@ class TLDetector(object):
                 # find the light that is closest to the car and return the color of that light
                 if closest_tl_wpt < 0 or closest_light_wp_index  < closest_tl_wpt:
                     closest_tl_wpt = closest_light_wp_index
-                    light_state = self.get_light_state(light)
+                    # light_state = self.get_light_state(light)
 
                 # Create a list of waypoints close to the lights
                 # Removing for now 12/9/2017
@@ -261,8 +261,8 @@ class TLDetector(object):
         # changing as suggested by Jingjing - nalini 12/9/2017
         if closest_tl_wpt != -1:
             #TODO: Change back to 'return closest_tl_wpt, light_state' when we detect traffic light
-            #return closest_tl_wpt, TrafficLight.RED
-		return closest_tl_wpt, light_state
+            return closest_tl_wpt, TrafficLight.RED
+	    #return closest_tl_wpt, light_state
         else:
             return -1, TrafficLight.UNKNOWN
 

@@ -10,6 +10,7 @@ from light_classification.tl_classifier import TLClassifier
 import tf
 import cv2
 import yaml
+import time
 
 # latest updates by Nalini 12/11/2017
 # not completed 
@@ -189,10 +190,10 @@ class TLDetector(object):
             int: index of waypoint closest to the upcoming stop line for a traffic light (-1 if none exists)
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
-            Modified by Nalini 11/24/2017
-
+            
         """
         closest_tl_wpt = -1
+	closest_light_number = -1
 
         if self.car_pose and self.waypoints:
 
@@ -203,7 +204,7 @@ class TLDetector(object):
 
             # check all the lights
             for i, light in enumerate(self.lights):
-                # if light is red get the closest waypoint to the light
+                # get the closest waypoint to the light
                 closest_light_wp_index = self.get_closest_waypoint(light.pose.pose)
 
                 # if the light waypooint is behind the car waypoint, move on to the next one
@@ -213,7 +214,19 @@ class TLDetector(object):
                 # find the light that is closest to the car and return the color of that light
                 if closest_tl_wpt < 0 or closest_light_wp_index  < closest_tl_wpt:
                     closest_tl_wpt = closest_light_wp_index
-                    light_state = self.get_light_state(light)
+		    closest_light_number = i
+  
+	print("Closest light waypoint =", closest_tl_wpt)
+	print("Closest light number =", closest_light_number)
+      
+	# get the closest light and the state of that light only
+
+	start_time = now = time.time();
+
+	closest_light = self.lights[closest_light_number] 
+	light_state = self.get_light_state(closest_light)
+
+	print("Total Detection time =", time.time() - start_time)
 
         #send back the index of the waypoint closest to the car and light
         # changing as suggested by Jingjing - nalini 12/9/2017

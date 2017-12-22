@@ -17,8 +17,10 @@ class TLClassifier(object):
         """Loads the classifier model from source"""
 
         # code for the simulator model - Chinmaya
-        print("ChinmayaModel 3")
+        print("ChinmayaModel 5")
         model_path = os.path.join(os.path.dirname(__file__), 'Models/frozen_sim_inception/frozen_inference_graph.pb')
+
+	# model_path = os.path.join(os.path.dirname(__file__), 'Models/faster_rcnn-traffic-udacity_sim/frozen_inference_graph.pb')
 
         self.detection_graph = tf.Graph()
 
@@ -70,7 +72,7 @@ class TLClassifier(object):
         scores = np.squeeze(scores)
         classes = np.squeeze(classes).astype(np.int32)
 
-        #TODO remove timer as son as we have solved performance issue
+        #TODO remove timer as soon as we have solved performance issue
         print("Done detection, time needed=", time.time() - now)
 
         # prediction = TrafficLight.UNKNOWN
@@ -91,6 +93,7 @@ class TLClassifier(object):
                     print("in green=", class_number)
                     return TrafficLight.GREEN
                 elif class_number == 3:
+		    print("in yellow =", class_number)
                     return TrafficLight.YELLOW
 
         return TrafficLight.UNKNOWN

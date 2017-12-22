@@ -173,7 +173,7 @@ class TLDetector(object):
 
         """
         if not self.has_image:
-            return False
+            return TrafficLight.UNKNOWN
 
         cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
 
@@ -183,7 +183,7 @@ class TLDetector(object):
             return self.light_classifier.get_classification(cv_image)
         else:
             # Prevent the car to move before our traffic light classifier is ready
-            return False
+            return TrafficLight.UNKNOWN
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its
@@ -198,7 +198,9 @@ class TLDetector(object):
         closest_tl_wpt = -1
         closest_light_number = -1
 
-        if self.car_pose and self.waypoints:
+        if self.car_pose and self.waypoints and self.has_image:
+
+            start_time = time.time()
 
             # get closest waypoint to the car
             waypoint_car_idx = self.get_closest_waypoint(self.car_pose.pose)
@@ -221,15 +223,12 @@ class TLDetector(object):
   
             print("Closest light waypoint =", closest_tl_wpt)
             print("Closest light number =", closest_light_number)
-      
-            # get the closest light and the state of that light only
-            start_time = now = time.time()
 
-            # Get light state only once for the nearest light
+            # get the closest light and the state of that light only
             closest_light = self.lights[closest_light_number]
             light_state = self.get_light_state(closest_light)
 
-            print("Total Detection time =", time.time() - start_time)
+            print("\nTotal Detection time =", time.time() - start_time)
 
             #send back the index of the waypoint closest to the car and light
             # changing as suggested by Jingjing - nalini 12/9/2017
@@ -240,6 +239,10 @@ class TLDetector(object):
             else:
                 print("Returning unknown")
                 return -1, TrafficLight.UNKNOWN
+
+        else:
+            print("Not ready")
+            return -2, TrafficLight.UNKNOWN
 
 
 if __name__ == '__main__':

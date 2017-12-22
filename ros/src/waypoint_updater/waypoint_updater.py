@@ -22,6 +22,7 @@ MAX_DECEL = 0.5
 STOP_DIST = 30.0
 TARGET_SPEED_METER_PER_SECOND = 1609.34/3600
 
+
 class WaypointUpdater(object):
     def __init__(self):
         rospy.init_node('waypoint_updater')

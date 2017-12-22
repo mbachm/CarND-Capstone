@@ -177,6 +177,9 @@ class Bridge(object):
         image = PIL_Image.open(BytesIO(base64.b64decode(imgString)))
         image_array = np.asarray(image)
 
+        if len(image_array.shape) < 2:
+            return 
+
         image_message = self.bridge.cv2_to_imgmsg(image_array, encoding="rgb8")
         self.publishers['image'].publish(image_message)
 

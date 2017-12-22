@@ -67,3 +67,13 @@ cd CarND-Capstone/ros
 roslaunch launch/site.launch
 ```
 5. Confirm that traffic light detection works on real life images
+
+### Team Members
+
+| Name                | Email                       | Slack     | TimeZone  |
+|:-------------------:|:---------------------------:|:---------:|:---------:|
+| Chinmaya Patnayak   | chinmayapatnayak@gmail.com  | @chertz   | UTC+530   |
+| Jingjing Du         | hmily1119@gmail.com         | @jjd      | UTC+1     |
+| Nalini Sharma       | nalini.sharma@gmail.com     | @ns_5723  | UTC-8     |
+| Michael Bachmann    | mbachm87@gmail.com          | @mbachm   | UTC+1     |
+| Adriana Costas      | adricostas90@gmail.com      | @adcostas | UTC+1     |

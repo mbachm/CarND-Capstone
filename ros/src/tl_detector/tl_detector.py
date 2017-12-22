@@ -8,18 +8,16 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from light_classification.tl_classifier import TLClassifier
 import tf
-import cv2
+import time
 import yaml
 import time
 
 # latest updates by Nalini 12/11/2017
 # not completed 
 
-
-
-
 import numpy as np
 import math
+
 
 STATE_COUNT_THRESHOLD = 3
 
@@ -37,7 +35,7 @@ class TLDetector(object):
         self.lights = []
         self.state = TrafficLight.UNKNOWN
         self.last_state = TrafficLight.UNKNOWN
-        self.last_wp = -1
+        self.last_wp = -2
         self.state_count = 0
 
         sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
@@ -79,19 +77,19 @@ class TLDetector(object):
         car_x = car_pose.pose.position.x
         car_y = car_pose.pose.position.y
         car_z = car_pose.pose.position.z
-        return (car_x, car_y, car_z)
+        return car_x, car_y, car_z
 
     def get_waypoint_coordinates(self, waypoint):
         w_x = waypoint.pose.pose.position.x
         w_y = waypoint.pose.pose.position.y
         w_z = waypoint.pose.pose.position.z
-        return(w_x, w_y, w_z)
+        return w_x, w_y, w_z
 
     def get_light_coordinates(self, light):
         l_x = light.pose.pose.position.x
         l_y = light.pose.pose.position.y
         l_z = light.pose.pose.position.z
-        return(l_x, l_y, l_z)
+        return l_x, l_y, l_z
 
     def distance(self, x1, y1, z1, x2, y2, z2):
         dx, dy, dz = x1-x2, y1-y2, z1-z2
@@ -109,11 +107,14 @@ class TLDetector(object):
     def image_cb(self, msg):
         """Identifies red lights in the incoming camera image and publishes the index
             of the waypoint closest to the red light's stop line to /traffic_waypoint
+            Values: -2 = uninitialized, -1 = no red light, > 0 = next red light
 
         Args:
             msg (Image): image from car-mounted camera
 
         """
+        #TODO remove timer as son as we have solved performance issue
+        now = time.time()
         self.has_image = True
         self.camera_image = msg
         light_wp, state = self.process_traffic_lights()
@@ -135,6 +136,8 @@ class TLDetector(object):
         else:
             self.upcoming_red_light_pub.publish(Int32(self.last_wp))
             self.state_count += 1
+
+        print("image_cb, time needed=", time.time() - now)
 
     def get_closest_waypoint(self, pose):
         """Identifies the closest path waypoint to the given position
@@ -180,7 +183,7 @@ class TLDetector(object):
             return self.light_classifier.get_classification(cv_image)
         else:
             # Prevent the car to move before our traffic light classifier is ready
-            return TrafficLight.RED
+            return False
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its
@@ -193,7 +196,7 @@ class TLDetector(object):
             
         """
         closest_tl_wpt = -1
-	closest_light_number = -1
+        closest_light_number = -1
 
         if self.car_pose and self.waypoints:
 
@@ -212,31 +215,31 @@ class TLDetector(object):
                     continue
 
                 # find the light that is closest to the car and return the color of that light
-                if closest_tl_wpt < 0 or closest_light_wp_index  < closest_tl_wpt:
+                if closest_tl_wpt < 0 or closest_light_wp_index < closest_tl_wpt:
                     closest_tl_wpt = closest_light_wp_index
-		    closest_light_number = i
+                    closest_light_number = i
   
-	print("Closest light waypoint =", closest_tl_wpt)
-	print("Closest light number =", closest_light_number)
+            print("Closest light waypoint =", closest_tl_wpt)
+            print("Closest light number =", closest_light_number)
       
-	# get the closest light and the state of that light only
+            # get the closest light and the state of that light only
+            start_time = now = time.time()
 
-	start_time = now = time.time();
+            # Get light state only once for the nearest light
+            closest_light = self.lights[closest_light_number]
+            light_state = self.get_light_state(closest_light)
 
-	closest_light = self.lights[closest_light_number] 
-	light_state = self.get_light_state(closest_light)
+            print("Total Detection time =", time.time() - start_time)
 
-	print("Total Detection time =", time.time() - start_time)
+            #send back the index of the waypoint closest to the car and light
+            # changing as suggested by Jingjing - nalini 12/9/2017
+            if closest_tl_wpt != -1:
+                print("Light State In Detector=", light_state)
+                return closest_tl_wpt, light_state
 
-        #send back the index of the waypoint closest to the car and light
-        # changing as suggested by Jingjing - nalini 12/9/2017
-        if closest_tl_wpt != -1:
-            print("Light State In Detector=", light_state)
-            return closest_tl_wpt, light_state
-
-        else:
-            print("Returning unknown")
-            return -1, TrafficLight.UNKNOWN
+            else:
+                print("Returning unknown")
+                return -1, TrafficLight.UNKNOWN
 
 
 if __name__ == '__main__':

@@ -1,11 +1,8 @@
 from styx_msgs.msg import TrafficLight
-
-
 import numpy as np
 import os
 import tensorflow as tf
 import time
-
 
 # added by Nalini 12/18/2017
 # added model, testing model
@@ -15,12 +12,11 @@ class TLClassifier(object):
 
     def __init__(self):
         """Loads the classifier model from source"""
-
+        #TODO remove timer as son as we have solved performance issue
+        now = time.time()
         # code for the simulator model - Chinmaya
         print("ChinmayaModel 5")
         model_path = os.path.join(os.path.dirname(__file__), 'Models/frozen_sim_inception/frozen_inference_graph.pb')
-
-	# model_path = os.path.join(os.path.dirname(__file__), 'Models/faster_rcnn-traffic-udacity_sim/frozen_inference_graph.pb')
 
         self.detection_graph = tf.Graph()
 
@@ -45,6 +41,8 @@ class TLClassifier(object):
             self.detection_scores = self.detection_graph.get_tensor_by_name('detection_scores:0')
             self.detection_classes = self.detection_graph.get_tensor_by_name('detection_classes:0')
             self.num_detections = self.detection_graph.get_tensor_by_name('num_detections:0')
+
+        print("Done loading detection model, time needed=", time.time() - now)
         
     def get_classification(self, image):
         """Determines the color of the traffic light in the image
@@ -53,15 +51,13 @@ class TLClassifier(object):
             Returns:
         int: ID of traffic light color (specified in styx_msgs/TrafficLight)
         """
-        #TODO implement light color prediction
-        print("Image Size=", image.shape)
-
         #TODO remove timer as son as we have solved performance issue
         now = time.time()
 
-        # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
-        image_np_expanded = np.expand_dims(image, axis=0)
+        cropped_image = self.crop_region_of_interest(image)
 
+        # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
+        image_np_expanded = np.expand_dims(cropped_image, axis=0)
 
         # Actual detection.
         (boxes, scores, classes, num) = self.session.run(
@@ -93,7 +89,11 @@ class TLClassifier(object):
                     print("in green=", class_number)
                     return TrafficLight.GREEN
                 elif class_number == 3:
-		    print("in yellow =", class_number)
+                    print("in yellow =", class_number)
                     return TrafficLight.YELLOW
 
         return TrafficLight.UNKNOWN
+
+    def crop_region_of_interest(self, img):
+        cropy = int(round(img.shape[0] * 0.75))
+        return img[0:cropy, :, :]

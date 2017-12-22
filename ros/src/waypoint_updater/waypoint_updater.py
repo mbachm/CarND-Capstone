@@ -2,7 +2,6 @@
 
 import rospy
 import math
-import tf
 from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
 from std_msgs.msg import Int32
@@ -39,12 +38,13 @@ class WaypointUpdater(object):
         self.waypoints = None
         self.red_light_wp = None
         self.start_velocity = None
+        self.tl_detector_started = False
 
         rospy.spin()
 
     def pose_cb(self, msg):
         self.current_pose = msg.pose
-        if self.waypoints is not None:
+        if self.waypoints is not None and self.tl_detector_started is True:
             self.create_final_waypoints()
 
     def waypoints_cb(self, msg):
@@ -55,7 +55,8 @@ class WaypointUpdater(object):
 
     def traffic_cb(self, msg):
         self.red_light_wp = msg.data
-        if self.red_light_wp > -1:
+        self.tl_detector_started = True
+        if self.red_light_wp > -2:
             self.create_final_waypoints()
 
     def obstacle_cb(self, msg):
@@ -80,7 +81,7 @@ class WaypointUpdater(object):
         x, y, z = p1.x - p2.x, p1.y - p2.y, p1.z - p2.z
         return math.sqrt(x*x + y*y + z*z)
 
-    def get_closest_waypoint(self, pose, waypoints):
+    def get_closest_waypoint(self, pose):
         # simply take the code from the path planning module and re-implement it here
         closest_len = 100000
         closest_waypoint = 0
@@ -117,7 +118,7 @@ class WaypointUpdater(object):
     def create_final_waypoints(self):
 
         if self.current_pose is not None:
-            idx_of_nearest_wp = self.get_closest_waypoint(self.current_pose, self.waypoints)
+            idx_of_nearest_wp = self.get_closest_waypoint(self.current_pose)
             next_waypoints = self.waypoints[idx_of_nearest_wp:idx_of_nearest_wp+LOOKAHEAD_WPS]
 
             if self.red_light_wp is None or self.red_light_wp < 0:
@@ -133,6 +134,7 @@ class WaypointUpdater(object):
             lane.waypoints = next_waypoints
 
             self.final_waypoints_pub.publish(lane)
+
 
 if __name__ == '__main__':
     try:

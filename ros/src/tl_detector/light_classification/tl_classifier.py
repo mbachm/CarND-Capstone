@@ -16,7 +16,7 @@ class TLClassifier(object):
         now = time.time()
         # code for the simulator model - Chinmaya
         print("ChinmayaModel 5")
-        model_path = os.path.join(os.path.dirname(__file__), 'Models/frozen_sim_inception/frozen_inference_graph.pb')
+        model_path = os.path.join(os.path.dirname(__file__), 'Models/frozen_sim_mobile/frozen_inference_graph.pb')
 
         self.detection_graph = tf.Graph()
 

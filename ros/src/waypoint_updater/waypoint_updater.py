@@ -38,7 +38,6 @@ class WaypointUpdater(object):
         self.current_pose = None
         self.waypoints = None
         self.red_light_wp = None
-        self.start_velocity = None
         self.tl_detector_started = False
 
         rospy.spin()
@@ -52,7 +51,6 @@ class WaypointUpdater(object):
         # do this once and not all the time
         if self.waypoints is None:
             self.waypoints = msg.waypoints
-            self.start_velocity = self.waypoints[0].twist.twist.linear.x
 
     def traffic_cb(self, msg):
         self.red_light_wp = msg.data
@@ -122,11 +120,7 @@ class WaypointUpdater(object):
             idx_of_nearest_wp = self.get_closest_waypoint(self.current_pose)
             next_waypoints = self.waypoints[idx_of_nearest_wp:idx_of_nearest_wp+LOOKAHEAD_WPS]
 
-            if self.red_light_wp is None or self.red_light_wp < 0:
-                for i in range(len(next_waypoints) - 1):
-                    self.set_waypoint_velocity(next_waypoints, i, self.start_velocity * TARGET_SPEED_METER_PER_SECOND)
-
-            else:
+            if self.red_light_wp is not None and self.red_light_wp == -1:
                 redlight_lookahead_index = max(0, self.red_light_wp - idx_of_nearest_wp)
                 next_waypoints = self.decelerate(next_waypoints, redlight_lookahead_index)
 

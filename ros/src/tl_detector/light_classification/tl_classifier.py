@@ -15,7 +15,7 @@ class TLClassifier(object):
         #TODO remove timer as son as we have solved performance issue
         now = time.time()
         # code for the simulator model - Chinmaya
-        print("ChinmayaModel 5")
+        print("1. - in Classifier load model---")
         model_path = os.path.join(os.path.dirname(__file__), 'Models/frozen_sim_mobile/frozen_inference_graph.pb')
 
         self.detection_graph = tf.Graph()
@@ -52,6 +52,9 @@ class TLClassifier(object):
         int: ID of traffic light color (specified in styx_msgs/TrafficLight)
         """
         #TODO remove timer as son as we have solved performance issue
+
+	print("5. - in get_classification---")
+
         now = time.time()
 
         cropped_image = self.crop_region_of_interest(image)

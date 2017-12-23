@@ -113,6 +113,9 @@ class TLDetector(object):
 
         """
         #TODO remove timer as son as we have solved performance issue
+
+	print("2. in Image_cb---")
+
         now = time.time()
         self.has_image = True
         self.camera_image = msg
@@ -124,6 +127,8 @@ class TLDetector(object):
         of times till we start using it. Otherwise the previous stable state is
         used.
         '''
+
+	
         if self.state != state:
             self.state_count = 0
             self.state = state
@@ -171,6 +176,8 @@ class TLDetector(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
+
+	print("4. - in get_light_state--")
         if not self.has_image:
             return TrafficLight.UNKNOWN
 
@@ -194,6 +201,9 @@ class TLDetector(object):
 
             
         """
+
+	print("3. - in process_traffic_lights--")
+
         closest_tl_wpt = -1
         closest_light_number = -1
 
@@ -228,11 +238,13 @@ class TLDetector(object):
             light_state = self.get_light_state(closest_light)
 
             print("\nTotal Detection time =", time.time() - start_time)
+	    print("6. - classification completed---")
 
             #send back the index of the waypoint closest to the car and light
             # changing as suggested by Jingjing - nalini 12/9/2017
             if closest_tl_wpt != -1:
                 print("Light State In Detector=", light_state)
+		print("7. - return classification ---")
                 return closest_tl_wpt, light_state
 
             else:

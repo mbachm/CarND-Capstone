@@ -186,7 +186,9 @@ class TLDetector(object):
         # Get classification
         # Extrem slow startup of TLClassifier(). Perhaps there is a more elegant solution
         if self.light_classifier is not None:
-            return self.light_classifier.get_classification(cv_image)
+	    ls = self.light_classifier.get_classification(cv_image)
+	    print("Traffic light in get light state = ", ls)
+            return ls
         else:
             # Prevent the car to move before our traffic light classifier is ready
             return TrafficLight.UNKNOWN
@@ -243,7 +245,7 @@ class TLDetector(object):
             #send back the index of the waypoint closest to the car and light
             # changing as suggested by Jingjing - nalini 12/9/2017
             if closest_tl_wpt != -1:
-                print("Light State In Detector=", light_state)
+                print("Light State In process_traffic_light =", light_state)
 		print("7. - return classification ---")
                 return closest_tl_wpt, light_state
 

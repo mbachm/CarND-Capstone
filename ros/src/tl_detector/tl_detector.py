@@ -17,7 +17,7 @@ import numpy as np
 import math
 
 
-STATE_COUNT_THRESHOLD = 3
+STATE_COUNT_THRESHOLD = 2
 
 
 class TLDetector(object):
@@ -59,7 +59,7 @@ class TLDetector(object):
         self.light_classifier_pub = rospy.Publisher('/light_classifier_loaded', Int32, queue_size=1)
 
         self.bridge = CvBridge()
-        self.light_classifier = TLClassifier()
+        self.light_classifier = TLClassifier(rospy.get_param('~simulator'))
         self.listener = tf.TransformListener()
 
         # added new 12/24/2017
@@ -131,8 +131,6 @@ class TLDetector(object):
         self.camera_image = msg
 
     def loop_light(self):
-        print("2a. in loop_light---")
-
         now = rospy.Time.now()
 
         light_wp, state = self.process_traffic_lights()
@@ -163,7 +161,7 @@ class TLDetector(object):
 
         finish_time = rospy.Time.now()
         elapsed = float(finish_time.secs - now.secs) + float(finish_time.nsecs - now.nsecs)/1000000000
-        print("image_cb, time needed=", elapsed)
+        rospy.loginfo("loop_light, time needed=%s"%elapsed)
 
     def get_closest_waypoint(self, pose):
         """Identifies the closest path waypoint to the given position
@@ -199,7 +197,6 @@ class TLDetector(object):
 
         """
 
-        print("4. - in get_light_state--")
         if self.camera_image is None:
             return TrafficLight.UNKNOWN
 
@@ -208,7 +205,7 @@ class TLDetector(object):
         # Get classification
         if self.light_classifier is not None:
             ls = self.light_classifier.get_classification(cv_image)
-            print("Traffic light in get light state = ", ls)
+            rospy.loginfo("Traffic light in get light state = %s"%ls)
             return ls
         else:
             return TrafficLight.UNKNOWN
@@ -232,7 +229,7 @@ class TLDetector(object):
             light_distance = self.get_light_distance(self.closest_tl_wpt)
 
             if light_distance > 100:
-                print("Light too far (%f)... skip model computation", light_distance)
+                rospy.loginfo("Light too far (%f)... skip model computation"%light_distance)
                 return -1, TrafficLight.UNKNOWN
 
             # get the closest light and the state of that light only
@@ -241,7 +238,7 @@ class TLDetector(object):
 
             finish_time = rospy.Time.now()
             elapsed = float(finish_time.secs - start_time.secs) + float(finish_time.nsecs - start_time.nsecs)/1000000000
-            print("Total Detection time =", elapsed)
+            rospy.loginfo("Total Detection time =%s"%elapsed)
 
             #send back the index of the waypoint closest to the car and light
             # changing as suggested by Jingjing - nalini 12/9/2017

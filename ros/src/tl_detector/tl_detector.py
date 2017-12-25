@@ -231,7 +231,7 @@ class TLDetector(object):
             # Check if light is too far away. In that case do not compute the color.
             light_distance = self.get_light_distance(self.closest_tl_wpt)
 
-            if light_distance > 300:
+            if light_distance > 100:
                 print("Light too far (%f)... skip model computation", light_distance)
                 return -1, TrafficLight.UNKNOWN
 

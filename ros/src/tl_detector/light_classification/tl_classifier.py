@@ -95,5 +95,5 @@ class TLClassifier(object):
     def crop_region_of_interest(self, img):
         cropy = int(round(img.shape[0] * 0.7))
         image_width = img.shape[1]
-        startx = int(round(img.shape[1] * 0.05))
-        return img[0:cropy, startx:image_width-startx, :]
+        startx = int(round(img.shape[1] * 0.3))
+        return img[0:cropy, startx:image_width, :]

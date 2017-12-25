@@ -27,24 +27,26 @@ class WaypointUpdater(object):
     def __init__(self):
         rospy.init_node('waypoint_updater')
 
+        self.classifier_loaded = False
+
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb, queue_size=1)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb, queue_size=1)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
         rospy.Subscriber('/traffic_waypoint', Int32, self.traffic_cb, queue_size=1)
         rospy.Subscriber('/obstacle_waypoint', Lane, self.obstacle_cb, queue_size=1)
+        rospy.Subscriber('/light_classifier_loaded', Int32, self.classifier_loaded_cb, queue_size=1)
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
         self.current_pose = None
         self.waypoints = None
         self.red_light_wp = None
-        self.tl_detector_started = False
 
         rospy.spin()
 
     def pose_cb(self, msg):
         self.current_pose = msg.pose
-        if self.waypoints is not None and self.tl_detector_started is True:
+        if self.waypoints is not None and self.classifier_loaded is True:
             self.create_final_waypoints()
 
     def waypoints_cb(self, msg):
@@ -54,13 +56,15 @@ class WaypointUpdater(object):
 
     def traffic_cb(self, msg):
         self.red_light_wp = msg.data
-        self.tl_detector_started = True
-        if self.red_light_wp > -2:
+        if self.classifier_loaded is True:
             self.create_final_waypoints()
 
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later
         pass
+
+    def classifier_loaded_cb(self, msg):
+        self.classifier_loaded = True
 
     def get_waypoint_velocity(self, waypoint):
         return waypoint.twist.twist.linear.x
@@ -70,7 +74,7 @@ class WaypointUpdater(object):
 
     def distance(self, waypoints, wp1, wp2):
         dist = 0
-        dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
+        dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2 + (a.z-b.z)**2)
         for i in range(wp1, wp2+1):
             dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
             wp1 = i
@@ -120,7 +124,7 @@ class WaypointUpdater(object):
             idx_of_nearest_wp = self.get_closest_waypoint(self.current_pose)
             next_waypoints = self.waypoints[idx_of_nearest_wp:idx_of_nearest_wp+LOOKAHEAD_WPS]
 
-            if self.red_light_wp is not None and self.red_light_wp == -1:
+            if self.red_light_wp is not None and self.red_light_wp != -1:
                 redlight_lookahead_index = max(0, self.red_light_wp - idx_of_nearest_wp)
                 next_waypoints = self.decelerate(next_waypoints, redlight_lookahead_index)
 
@@ -128,6 +132,7 @@ class WaypointUpdater(object):
             lane.header.frame_id = '/world'
             lane.waypoints = next_waypoints
 
+            print("Publish lane")
             self.final_waypoints_pub.publish(lane)
 
 

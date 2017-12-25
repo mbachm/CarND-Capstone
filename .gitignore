@@ -12,5 +12,3 @@ CarND-Capstone.iml
 # apple stuff
 *.DS_Store
 *.AppleDouble
-
-ros/src/tl_detector/light_classification/Models/*

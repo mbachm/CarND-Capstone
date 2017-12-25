@@ -2,6 +2,7 @@
 
 import rospy
 import math
+import copy
 from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
 from std_msgs.msg import Int32
@@ -122,7 +123,7 @@ class WaypointUpdater(object):
 
         if self.current_pose is not None:
             idx_of_nearest_wp = self.get_closest_waypoint(self.current_pose)
-            next_waypoints = self.waypoints[idx_of_nearest_wp:idx_of_nearest_wp+LOOKAHEAD_WPS]
+            next_waypoints = copy.deepcopy(self.waypoints[idx_of_nearest_wp:idx_of_nearest_wp+LOOKAHEAD_WPS])
 
             if self.red_light_wp is not None and self.red_light_wp != -1:
                 redlight_lookahead_index = max(0, self.red_light_wp - idx_of_nearest_wp)
@@ -132,7 +133,6 @@ class WaypointUpdater(object):
             lane.header.frame_id = '/world'
             lane.waypoints = next_waypoints
 
-            print("Publish lane")
             self.final_waypoints_pub.publish(lane)
 
 

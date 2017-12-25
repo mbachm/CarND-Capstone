@@ -14,6 +14,7 @@ class TLClassifier(object):
         """Loads the classifier model from source"""
         #TODO remove timer as son as we have solved performance issue
         now = time.time()
+        self.loaded_model = False
         # code for the simulator model - Chinmaya
         print("1. - in Classifier load model 1---")
         model_path = os.path.join(os.path.dirname(__file__), 'Models/frozen_sim_mobile/frozen_inference_graph.pb')
@@ -43,6 +44,7 @@ class TLClassifier(object):
             self.num_detections = self.detection_graph.get_tensor_by_name('num_detections:0')
 
         print("Done loading detection model, time needed=", time.time() - now)
+        self.loaded_model = True
         
     def get_classification(self, image):
         """Determines the color of the traffic light in the image
@@ -53,7 +55,7 @@ class TLClassifier(object):
         """
         #TODO remove timer as son as we have solved performance issue
 
-	print("5. - in get_classification---")
+        print("5. - in get_classification---")
 
         now = time.time()
 
@@ -67,36 +69,31 @@ class TLClassifier(object):
                 [self.detection_boxes, self.detection_scores, self.detection_classes, self.num_detections],
                 feed_dict={self.image_tensor: image_np_expanded})
 
-        boxes = np.squeeze(boxes)
         scores = np.squeeze(scores)
         classes = np.squeeze(classes).astype(np.int32)
 
-        #TODO remove timer as soon as we have solved performance issue
-        print("Done detection, time needed=", time.time() - now)
-
-        # prediction = TrafficLight.UNKNOWN
         min_score_thresh = .80
-        for i in range(boxes.shape[0]):
-            if scores is None or scores[i] > min_score_thresh:
-                # use class and score to detect the red light
-                class_number = classes[i]
+        above_thresh = np.argwhere(scores > min_score_thresh)
+        if above_thresh is not None and above_thresh.size > 0:
+            class_number = classes[above_thresh[0]]
+            if class_number == 2:
+                print("Done detection, time needed=", time.time() - now)
+                print("in Red=", class_number)
+                return TrafficLight.RED
+            elif class_number == 1:
+                print("Done detection, time needed=", time.time() - now)
+                print("in green=", class_number)
+                return TrafficLight.GREEN
+            elif class_number == 3:
+                print("Done detection, time needed=", time.time() - now)
+                print("in yellow =", class_number)
+                return TrafficLight.YELLOW
 
-                print("Class Number=", class_number)
-
-                # if 2 is red, identify that
-                # assuming 1 == green, 4 == off, 2 == red, 3 == yellow
-                if class_number == 2:
-                    print("in Red=", class_number)
-                    return TrafficLight.RED
-                elif class_number == 1:
-                    print("in green=", class_number)
-                    return TrafficLight.GREEN
-                elif class_number == 3:
-                    print("in yellow =", class_number)
-                    return TrafficLight.YELLOW
-
+        print("Done detection, time needed=", time.time() - now)
         return TrafficLight.UNKNOWN
 
     def crop_region_of_interest(self, img):
-        cropy = int(round(img.shape[0] * 0.75))
-        return img[0:cropy, :, :]
+        cropy = int(round(img.shape[0] * 0.7))
+        image_width = img.shape[1]
+        startx = int(round(img.shape[1] * 0.05))
+        return img[0:cropy, startx:image_width-startx, :]

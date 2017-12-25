@@ -15,7 +15,7 @@ class TLClassifier(object):
         #TODO remove timer as son as we have solved performance issue
         now = time.time()
         # code for the simulator model - Chinmaya
-        print("1. - in Classifier load model---")
+        print("1. - in Classifier load model 1---")
         model_path = os.path.join(os.path.dirname(__file__), 'Models/frozen_sim_mobile/frozen_inference_graph.pb')
 
         self.detection_graph = tf.Graph()

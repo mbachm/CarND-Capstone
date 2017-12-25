@@ -61,7 +61,15 @@ class TLDetector(object):
         self.light_classifier = TLClassifier()
         self.listener = tf.TransformListener()
 
-        rospy.spin()
+	# added new 12/24/2017
+	rate = rospy.Rate(10)
+	while not rospy.is_shutdown():
+		self.loop_light()
+		rate.sleep()
+		
+
+      
+	rospy.spin()
 
     def pose_cb(self, msg):
         self.car_pose = msg
@@ -118,13 +126,22 @@ class TLDetector(object):
 
         print("2. in Image_cb---")
 
-        now = rospy.Time.now()
+        # now = rospy.Time.now()
         self.has_image = True
         self.camera_image = msg
-        light_wp, state = self.process_traffic_lights()
+        
 
-        if (now.secs - self.last_run.secs) < 1:
-        	print ("skipping conmputation. Trying to run at 1Hz")
+    def loop_light(self):
+
+	print("2a. in loop_light---")
+
+	now = rospy.Time.now()
+
+	light_wp, state = self.process_traffic_lights()
+
+	# comment out for now.trying something else
+        # if (now.secs - self.last_run.secs) < 1:
+        	# print ("skipping conmputation. Trying to run at 1Hz")
 
         '''
         Publish upcoming red lights at camera frequency.
@@ -143,11 +160,12 @@ class TLDetector(object):
             self.upcoming_red_light_pub.publish(Int32(light_wp))
         else:
             self.upcoming_red_light_pub.publish(Int32(self.last_wp))
-            self.state_count += 1
+        self.state_count += 1
 
         finish_time = rospy.Time.now()
         elapsed = float(finish_time.secs - now.secs) + float(finish_time.nsecs - now.nsecs)/1000000000
         print("image_cb, time needed=", elapsed)
+
 
     def get_closest_waypoint(self, pose):
         """Identifies the closest path waypoint to the given position
@@ -248,7 +266,7 @@ class TLDetector(object):
             print("Closest light number =", closest_light_number)
             print("Car to light distance =", light_distance)
 
-            if light_distance > 1000:
+            if light_distance > 300:
                 print("Light too far (%f)... skip model computation", light_distance)
                 return -1, TrafficLight.UNKNOWN
 

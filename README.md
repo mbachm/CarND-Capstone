@@ -70,10 +70,10 @@ roslaunch launch/site.launch
 
 ### Team Members
 
-| Name                | Email                       | Slack     | TimeZone  |
-|:-------------------:|:---------------------------:|:---------:|:---------:|
-| Chinmaya Patnayak   | chinmayapatnayak@gmail.com  | @chertz   | UTC+530   |
-| Jingjing Du         | hmily1119@gmail.com         | @jjd      | UTC+1     |
-| Nalini Sharma       | nalini.sharma@gmail.com     | @ns_5723  | UTC-8     |
-| Michael Bachmann    | mbachm87@gmail.com          | @mbachm   | UTC+1     |
-| Adriana Costas      | adricostas90@gmail.com      | @adcostas | UTC+1     |
+| Avatar | Name                | Email                       | Slack     | TimeZone  |
+|:------:|:-------------------:|:---------------------------:|:---------:|:---------:|
+|<img src="https://avatars0.githubusercontent.com/u/11560289?s=400&v=4" height="200"/> | [Adriana Costas](https://www.linkedin.com/in/adrianacostas/)      | adricostas90@gmail.com      | @adcostas | UTC+1     |
+|<img src="https://avatars0.githubusercontent.com/u/8222833?s=400&v=4" height="200"/>  | [Chinmaya Patnayak](https://www.linkedin.com/in/cpatnayak/)   | chinmayapatnayak@gmail.com  | @chertz   | UTC+530   |
+|<img src="https://avatars1.githubusercontent.com/u/8734528?s=400&v=4" height="200"/>  | [Jingjing Du](https://www.linkedin.com/in/jingjing-du-08b95341/)         | hmily1119@gmail.com         | @jjd      | UTC+1     |
+|<img src="https://avatars1.githubusercontent.com/u/25882698?s=400&v=4" height="200"/> | [Michael Bachmann](https://www.linkedin.com/in/michael-bachmann-ba80a8153/)    | mbachm87@gmail.com          | @mbachm   | UTC+1     |
+|<img src="https://avatars0.githubusercontent.com/u/22576329?s=400&v=4" height="200"/> | Nalini Sharma       | nalini.sharma@gmail.com     | @ns_5723  | UTC-8     |
